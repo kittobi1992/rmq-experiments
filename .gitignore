@@ -1,0 +1,11 @@
+*kateproject*
+*.o
+*.a
+results/
+results/*
+benchmark/
+benchmark/*
+*.png
+*.html
+*.seq
+*.qry
