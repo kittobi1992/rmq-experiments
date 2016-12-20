@@ -3,7 +3,7 @@
 #include <random>
 #include <fstream>
 #include <iostream>
-
+ 
 using ll = long long;
 ll min_value = 1LL;
 ll max_value = static_cast<ll>(std::numeric_limits<ll>::max());

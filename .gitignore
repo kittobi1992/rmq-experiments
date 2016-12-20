@@ -9,3 +9,5 @@ benchmark/*
 *.html
 *.seq
 *.qry
+scripts/.RData
+scripts/.Rhistory

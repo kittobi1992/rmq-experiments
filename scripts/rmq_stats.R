@@ -106,7 +106,7 @@ construction_plot <- function(d, title="Title") {
 }
 
 #==========Experiment===========#
-experiment_dir="/home/theuer/Dokumente/rmq/experiments/results/"
+experiment_dir="/home/theuer/Dokumente/rmq-experiments/results/"
 date="2016-12-18"
 seq_type="random"
 max_length="10"

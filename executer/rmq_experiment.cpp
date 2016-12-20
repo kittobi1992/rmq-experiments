@@ -8,7 +8,7 @@
 #include <chrono>
 #include <climits>
 
-#include "../../includes/RMQRMM64.h"
+#include "../rmq/includes/RMQRMM64.h"
 
 #define MILLI 1000
 #define MICRO 1000000
