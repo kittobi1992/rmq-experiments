@@ -106,9 +106,9 @@ construction_plot <- function(c, title="Title") {
 
 #==========Experiment===========#
 experiment_dir="/home/theuer/Dokumente/rmq-experiments/results/"
-date="2016-12-20"
+date="2016-12-18"
 seq_type="random"
-max_length="7"
+max_length="10"
 delta="0"
 tmp <- cbind(date,"rmq_experiment",seq_type,max_length,delta)
 experiment <- str_c(tmp,collapse='_');
