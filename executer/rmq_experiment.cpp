@@ -9,6 +9,7 @@
 #include <climits>
 
 #include "../rmq/includes/RMQRMM64.h"
+#include "../succinct/cartesian_tree.hpp"
 
 #define MILLI 1000
 #define MICRO 1000000
@@ -155,6 +156,33 @@ void executeRMQFerrada(long int *A, size_t N, vector<vector<query>>& qry) {
     }
     
 }
+
+void executeRMQSuccinct(std::vector<long long>& A, size_t N, vector<vector<query>>& qry) {
+    string algo = "RMQ_SUCCINCT";
+    vector<query_stats> q_stats(qry.size(),query_stats(algo));
+    construction_stats c_stats(algo);
+    
+    s = time();
+    succinct::cartesian_tree rmq(A);
+    e = time();
+    
+    c_stats.addConstructionResult(N,milliseconds(),3.0);
+    c_stats.printConstructionStats();
+    
+    for(int i = 0; i < qry.size(); ++i) {
+        q_stats[i].N = N;
+        for(int j = 0; j < qry[i].size(); ++j) {
+            uint64_t i1 = qry[i][j].first, i2 = qry[i][j].second;
+            if(i1 > ULONG_MAX || i2 > ULONG_MAX) continue;
+            s = time();
+            auto res = rmq.rmq(i1,i2);
+            e = time();
+            q_stats[i].addQueryResult(qry[i][j],microseconds(),rand()%2);
+        }
+        q_stats[i].printQueryStats();
+    }
+    
+}
     
 
 int main(int argc, char *argv[]) {
@@ -203,7 +231,7 @@ int main(int argc, char *argv[]) {
         //RMQExperiment<rmq_succinct_bp<>> rmq2(algo2,&A,qv);
     }
     
-    {
+    /*{
         RMQExperiment<rmq_succinct_bp_fast<1024>> rmq3(algo3,&A,qv);
     }
     
@@ -213,7 +241,7 @@ int main(int argc, char *argv[]) {
     
     {
         RMQExperiment<rmq_succinct_rec<512>> rmq5(algo5,&A,qv);
-    }
+    }*/
    
     {
         RMQExperiment<rmq_succinct_rec<1024>> rmq6(algo6,&A,qv);
@@ -235,7 +263,17 @@ int main(int argc, char *argv[]) {
         executeRMQFerrada(B,N,qv);
     } 
     
+    
+    std::vector<long long> C(N);
+    for(size_t i = 0; i < N; ++i) {
+        C[i] = B[i];
+        if(C[i] != B[i]) return -1;
+    }
     delete [] B;
+    
+    {
+        executeRMQSuccinct(C,N,qv);
+    }
     
     
 }

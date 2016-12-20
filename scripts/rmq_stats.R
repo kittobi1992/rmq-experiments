@@ -60,7 +60,6 @@ query_plot <- function(d, title="Title", thres=4.0, aes_plot = aes(factor(Range)
   d$Range <- as.numeric(as.character(d$Range))
   d <- subset(d,d$Time <= thres)
   d <- subset(d,d$Algo != "RMQ_SDSL_BP")
-  d <- subset(d,d$Algo != "RMQ_SDSL_SCT")
 
   plot <- ggplot(d,aes_plot) + ggtitle(title)
   plot <- plot + geom_boxplot(aes(fill = factor(Algo)), outlier.size = 1)
@@ -83,22 +82,22 @@ query_facet_plot <- function(d, title="Title", thres=4.0, aes_plot = aes(factor(
   print(plot)
 }
 
-bpe_plot <- function(d, title="Title", aes_plot = aes(factor(d$N),d$BPE)) {
-  d$BPE <- as.numeric(as.character(d$BPE))
-  d$Algo  <- revalue(d$Algo, c("RMQ_FERRADA"="FERRADA","RMQ_SDSL_BP"="SDSL-BP","RMQ_SDSL_SCT"="SDSL-SCT","RMQ_SDSL_BP_FAST_1024"="SDSL-BP-FAST-1024","RMQ_SDSL_BP_FAST_4096"="SDSL-BP-FAST-4096"))
+bpe_plot <- function(c, title="Title", aes_plot = aes(factor(c$N),c$BPE)) {
+  c$BPE <- as.numeric(as.character(c$BPE))
+  c$Algo  <- revalue(c$Algo, c("RMQ_FERRADA"="FERRADA","RMQ_SDSL_BP"="SDSL-BP","RMQ_SDSL_SCT"="SDSL-SCT","RMQ_SDSL_BP_FAST_1024"="SDSL-BP-FAST-1024","RMQ_SDSL_BP_FAST_4096"="SDSL-BP-FAST-4096"))
   
-  plot <- ggplot(d,aes(factor(d$N),d$BPE,group=d$Algo,label=round(d$BPE,digits=3))) + ggtitle(title)
+  plot <- ggplot(c,aes(factor(c$N),c$BPE,group=c$Algo,label=round(c$BPE,digits=3))) + ggtitle(title)
   plot <- plot + geom_line(aes(colour=Algo)) + geom_text(vjust=0, check_overlap=TRUE)
   plot <- plot + scale_y_continuous(name = "Bits per Element")
   plot <- plot + theme_complete_bw()
   print(plot)
 }
 
-construction_plot <- function(d, title="Title") {
-  d$ConstructTime <- as.numeric(as.character(d$ConstructTime))
-  d$Algo  <- revalue(d$Algo, c("RMQ_FERRADA"="FERRADA","RMQ_SDSL_BP"="SDSL-BP","RMQ_SDSL_SCT"="SDSL-SCT","RMQ_SDSL_BP_FAST_1024"="SDSL-BP-FAST-1024","RMQ_SDSL_BP_FAST_4096"="SDSL-BP-FAST-4096"))
+construction_plot <- function(c, title="Title") {
+  c$ConstructTime <- as.numeric(as.character(c$ConstructTime))
+  c$Algo  <- revalue(c$Algo, c("RMQ_FERRADA"="FERRADA","RMQ_SDSL_BP"="SDSL-BP","RMQ_SDSL_SCT"="SDSL-SCT","RMQ_SDSL_BP_FAST_1024"="SDSL-BP-FAST-1024","RMQ_SDSL_BP_FAST_4096"="SDSL-BP-FAST-4096"))
   
-  plot <- ggplot(d,aes(factor(d$N),d$ConstructTime,group=factor(Algo))) + ggtitle(title)
+  plot <- ggplot(c,aes(factor(c$N),d$ConstructTime,group=factor(Algo))) + ggtitle(title)
   plot <- plot + geom_line(aes(colour=Algo))
   plot <- plot + scale_y_continuous(name = "Construction Time [s]")
   plot <- plot + theme_complete_bw()
@@ -107,9 +106,9 @@ construction_plot <- function(d, title="Title") {
 
 #==========Experiment===========#
 experiment_dir="/home/theuer/Dokumente/rmq-experiments/results/"
-date="2016-12-18"
+date="2016-12-20"
 seq_type="random"
-max_length="10"
+max_length="7"
 delta="0"
 tmp <- cbind(date,"rmq_experiment",seq_type,max_length,delta)
 experiment <- str_c(tmp,collapse='_');
@@ -124,13 +123,15 @@ query$Scan <- as.numeric(as.character(query$Scan))
 min_n = log10(min(query$N))
 max_n = log10(max(query$N))
 
-for (n in  (min_n:max_n)) {
+for (n in  (7:max_n)) {
   query_sub <- subset(query,query$N == 10^n)
   tmp_title <- cbind("Sequence length N=10^",n," (",seq_type," values) and increasing query ranges");
-  query_plot(query_sub, title = str_c(tmp_title,collapse=""),thres=5)
+  query_plot(query_sub, title = str_c(tmp_title,collapse=""),thres=7.5)
 }
 
 c <- read.csv2(paste(experiment,"/construct_result.csv",sep=""),sep=",",header=TRUE)
+c$N <- as.numeric(as.character(c$N))
+c$BPE <- as.numeric(as.character(c$BPE))
 bpe_plot(c, title = "Bits per Element with increasing sequence length")
 #construction_plot(d,title = "Construction time for increasing N")
 

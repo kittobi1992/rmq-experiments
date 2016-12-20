@@ -3,6 +3,7 @@ CFLAGS=-std=c++11 -O3
 SDSL_PREFIX=-DNDEBUG -I ~/include -L ~/lib
 SDSL_SUFFIX=-lsdsl -ldivsufsort -ldivsufsort64
 FERRADA_LIB=rmq/rmqrmmBP.a
+SUCCINCT_LIB=succinct/libsuccinct.a
 
 all: Experiments
 
@@ -17,7 +18,7 @@ Generators: generators/gen_sequence.cpp generators/gen_query.cpp
 	    $(CC) $(CFLAGS) generators/gen_query.cpp -o generators/gen_query.o
 
 Experiments: executer/rmq_experiment.cpp
-	     $(CC) $(CFLAGS) $(SDSL_PREFIX) executer/rmq_experiment.cpp -o executer/rmq_experiment.o $(SDSL_SUFFIX) $(FERRADA_LIB)
+	     $(CC) $(CFLAGS) $(SDSL_PREFIX) executer/rmq_experiment.cpp -o executer/rmq_experiment.o $(SDSL_SUFFIX) $(FERRADA_LIB) $(SUCCINCT_LIB)
 	     
 SDSL: 
 	bash -x ../sdsl-lite/build/build.sh
