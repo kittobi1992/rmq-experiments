@@ -1,0 +1,6 @@
+[submodule "modules/ferrada-rmq"]
+  path = modules/ferrada-rmq
+  url = https://github.com/hferrada/rmq.git
+[submodule "modules/succinct-rmq"]
+  path = modules/succinct-rmq
+  url = https://github.com/ot/succinct.git
