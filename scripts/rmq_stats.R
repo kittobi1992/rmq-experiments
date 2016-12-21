@@ -111,7 +111,8 @@ aggreg_timing = function(df) data.frame(Rank=mean(df$Rank),
                                         Scan=mean(df$Scan),
                                         SparseRMQ=mean(df$Sparse_RMQ),
                                         MinExcess=mean(df$min_excess),
-                                        MinExcessIdx=mean(df$min_excess_idx))
+                                        MinExcessIdx=mean(df$min_excess_idx),
+                                        Other=mean(df$Other))
 
 timing_plot <- function(timings, title="Title") {
   timings <- ddply(timings,c("Range"),aggreg_timing)
@@ -120,7 +121,7 @@ timing_plot <- function(timings, title="Title") {
   timings$value <- as.integer(timings$value)
   timings$variable <- as.character(timings$variable)
   
-  plot <- ggplot(data=timings,aes(x=factor(Range),y=value,fill=factor(variable))) + geom_bar(stat="identity")
+  plot <- ggplot(data=timings,aes(x=factor(Range),y=value,fill=factor(variable))) + geom_bar(stat="identity")  + ggtitle(title)
   plot <- plot + ylab("Time [ns]")
   plot <- plot + xlab("Range")
   plot <- plot + theme_complete_bw()
@@ -160,7 +161,7 @@ bpe_plot(c, title = "Bits per Element with increasing sequence length")
 
 experiment_dir="/home/theuer/Dokumente/rmq-experiments/results/"
 date="2016-12-21"
-seq_type="random"
+seq_type="decreasing"
 max_length="8"
 delta="0"
 tmp <- cbind(date,"rmq_experiment",seq_type,max_length,delta,"timings")
@@ -175,4 +176,6 @@ timings$Scan <- as.integer(as.character(timings$Scan))
 timings$Sparse_RMQ <- as.integer(as.character(timings$Sparse_RMQ))
 timings$min_excess <- as.integer(as.character(timings$min_excess))
 timings$min_excess_idx <- as.integer(as.character(timings$min_excess_idx))
-timing_plot(timings)
+timings$Other <- as.integer(as.character(timings$Other))
+tmp_title <- cbind("Operation timings for sequence of length N=10^",max_length," (",seq_type," values) and increasing query ranges");
+timing_plot(timings,title=str_c(tmp_title,collapse=""))

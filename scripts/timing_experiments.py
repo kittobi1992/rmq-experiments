@@ -64,6 +64,7 @@ def get_query_stats(out):
     res += [float(out.split('Sparse_RMQ=')[1].split()[0])]
     res += [float(out.split('min_excess=')[1].split()[0])]
     res += [float(out.split('min_excess_idx=')[1].split()[0])]
+    res += [float(out.split('Other=')[1].split()[0])]
     return res
 
 
@@ -130,7 +131,7 @@ def experiment(P,dirname):
     print '\n'
 
     #Construct CSV-Table with Query and Construction results
-    cols_query = ['Range','Rank','Scan','Select','Sparse_RMQ',"min_excess","min_excess_idx"]
+    cols_query = ['Range','Rank','Scan','Select','Sparse_RMQ',"min_excess","min_excess_idx","Other"]
     df_query = pd.DataFrame(query_res,columns=cols_query)
     
     df_query.to_csv(dirname + 'timing_result.csv')
