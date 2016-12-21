@@ -3,7 +3,8 @@ library(grid)
 library(scales)
 library(stringr)
 library(plyr)
-
+library(dplyr)
+library(reshape2)
 
 theme_complete_bw <- function(base_size = 12, base_family = "") {
   theme(
@@ -12,7 +13,8 @@ theme_complete_bw <- function(base_size = 12, base_family = "") {
     rect =               element_rect(fill = "white", colour = "black", size = 0.5, linetype = 1),
     text =               element_text(family = base_family, face = "plain",
                             colour = "black", size = base_size,
-                            hjust = 0.5, vjust = 0.5, angle = 0, lineheight = 0.9),
+                            hjust = 0.5, vjust = 0.5, angle = 0, lineheight = 0.9,
+                            margin = margin(), debug = FALSE),
     axis.text =          element_text(size = rel(0.8), colour = "grey50"),
     strip.text =         element_text(size = base_size * 0.7),
     axis.line =          element_blank(),
@@ -104,11 +106,32 @@ construction_plot <- function(c, title="Title") {
   print(plot)
 }
 
+aggreg_timing = function(df) data.frame(Rank=mean(df$Rank),
+                                        Select=mean(df$Select),
+                                        Scan=mean(df$Scan),
+                                        SparseRMQ=mean(df$Sparse_RMQ),
+                                        MinExcess=mean(df$min_excess),
+                                        MinExcessIdx=mean(df$min_excess_idx))
+
+timing_plot <- function(timings, title="Title") {
+  timings <- ddply(timings,c("Range"),aggreg_timing)
+  timings <- melt(timings, id.var="Range")
+  timings$Range <- as.integer(timings$Range)
+  timings$value <- as.integer(timings$value)
+  timings$variable <- as.character(timings$variable)
+  
+  plot <- ggplot(data=timings,aes(x=factor(Range),y=value,fill=factor(variable))) + geom_bar(stat="identity")
+  plot <- plot + ylab("Time [ns]")
+  plot <- plot + xlab("Range")
+  plot <- plot + theme_complete_bw()
+  print(plot)
+}
+
 #==========Experiment===========#
 experiment_dir="/home/theuer/Dokumente/rmq-experiments/results/"
-date="2016-12-18"
+date="2016-12-20"
 seq_type="random"
-max_length="10"
+max_length="8"
 delta="0"
 tmp <- cbind(date,"rmq_experiment",seq_type,max_length,delta)
 experiment <- str_c(tmp,collapse='_');
@@ -135,8 +158,21 @@ c$BPE <- as.numeric(as.character(c$BPE))
 bpe_plot(c, title = "Bits per Element with increasing sequence length")
 #construction_plot(d,title = "Construction time for increasing N")
 
-#e <- read.csv2("/home/theuer/Dokumente/rmq/experiments/results/experiment2/query_result10^10.csv",sep=",",header=TRUE)
-#e$Time <- as.numeric(as.character(e$Time))
-#e$Range <- as.numeric(as.character(e$Range))
-#e$N <- as.numeric(as.character(e$N))
-#query_plot(e, title = "Sequence length N=10^10 (random values) and increasing query range")
+experiment_dir="/home/theuer/Dokumente/rmq-experiments/results/"
+date="2016-12-21"
+seq_type="random"
+max_length="8"
+delta="0"
+tmp <- cbind(date,"rmq_experiment",seq_type,max_length,delta,"timings")
+experiment <- str_c(tmp,collapse='_');
+experiment <- paste(experiment_dir,experiment,sep="")
+
+timings <- read.csv2(paste(experiment,"/timing_result.csv",sep=""),sep=",",header=TRUE)
+timings$Range <- as.integer(as.character(timings$Range))
+timings$Rank <- as.integer(as.character(timings$Rank))
+timings$Select <- as.integer(as.character(timings$Select))
+timings$Scan <- as.integer(as.character(timings$Scan))
+timings$Sparse_RMQ <- as.integer(as.character(timings$Sparse_RMQ))
+timings$min_excess <- as.integer(as.character(timings$min_excess))
+timings$min_excess_idx <- as.integer(as.character(timings$min_excess_idx))
+timing_plot(timings)

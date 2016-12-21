@@ -7,7 +7,7 @@ SUCCINCT_LIB=succinct/libsuccinct.a
 
 all: experiments
 
-experiments: generators/gen_sequence.o generators/gen_query.o executer/rmq_experiment.o
+experiments: generators/gen_sequence.o generators/gen_query.o executer/rmq_experiment.o executer/timing_experiment.o
 
 rmq/RMQRMM64.o: rmq/RMQRMM64.cpp
 	        cd rmq && $(MAKE)
@@ -23,6 +23,9 @@ generators/gen_query.o: generators/gen_query.cpp
 
 executer/rmq_experiment.o: executer/rmq_experiment.cpp rmq/RMQRMM64.o succinct/libsuccinct.a ../sdsl-lite/build/lib/libsdsl.a
 	                   $(CC) $(CFLAGS) $(SDSL_PREFIX) executer/rmq_experiment.cpp -o executer/rmq_experiment.o $(SDSL_SUFFIX) $(FERRADA_LIB) $(SUCCINCT_LIB)
+
+executer/timing_experiment.o: ../sdsl-lite/build/lib/libsdsl.a
+			      $(CC) $(CFLAGS) $(SDSL_PREFIX) executer/timing_experiment.cpp -o executer/timing_experiment.o $(SDSL_SUFFIX)
 	     
 ../sdsl-lite/build/lib/libsdsl.a:   $(wildcard ../sdsl-lite/include/sdsl/*)
 				    rm -f $@
