@@ -42,25 +42,25 @@ public:
         
         while(!s.empty()) {
             ival cur = s.top(); s.pop();
-            if(cur.y == cur.x) {
-//                 cout << cur.x << " " << cur.y << endl;
-                continue;
-            } else if(cur.y - cur.x == 1) {
-//                 cout << cur.x << " " << cur.x << endl;
-//                 cout << cur.y << " " << cur.y << endl;
-                continue;
+            if(cur.x != cur.y-1) cout << "Internal Node: (" << cur.x << "," << cur.y-1 << ")" << endl;
+            else cout << "Leaf: " << cur.x << endl;
+            if(cur.y == cur.x) continue;
+            else if(cur.y - cur.x == 1) continue;
+            
+            size_t cur_x = cur.x;
+            while(cur_x < cur.y-1) {
+                if(cur_x+1 > cur.y-1) break; 
+                size_t min_i = _rmq(cur_x+1,cur.y-1);
+                if(min_i == cur.y-1 && _lcp[cur_x] < _lcp[min_i]) min_i = cur.y;
+//                 cout << "Rejected " << cur_x << " " << min_i-1 << endl;
+                if(cur.x != cur_x || min_i != cur.y) {
+                    s.push(make_pair(cur_x,min_i));
+                } else {
+                    s.push(make_pair(cur_x,cur_x+1));
+                    s.push(make_pair(cur_x+1,cur.y));
+                }
+                cur_x = min_i;
             }
-            
-            size_t min_i = _rmq(cur.x+1,cur.y-1);
-            if(min_i == cur.y-1) min_i++;
-            if(_lcp[cur.x] < _lcp[min_i]) min_i = cur.y;
-//             cout << cur.x << " " << cur.y << " " << min_i << endl;
-            ival child_ival = make_pair(cur.x+1,min_i);
-            ival remaining_ival = make_pair(min_i,cur.y);
-            cout << cur.x << " " << min_i-1 << endl;
-            
-            if(remaining_ival.x <= remaining_ival.y) s.push(remaining_ival);
-            if(child_ival.x <= child_ival.y) s.push(child_ival);
             
         }
     }
@@ -113,6 +113,7 @@ int main(int argc, char *argv[]) {
     string lcp_file = cache_file_name(conf::KEY_LCP, test_config);
     int_vector<> lcp;
     load_from_file(lcp, lcp_file);
+    append_zero_symbol(lcp);
     
     string algo1 = "RMQ_SUCCINCT_REC_1024";
     string algo2 = "RMQ_SUCCINCT_SCT";
