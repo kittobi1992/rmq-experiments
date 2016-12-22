@@ -104,7 +104,7 @@ def experiment(P,dirname):
     seq = 'benchmark/' + str(N) + '.seq'
         
     #Create Sequence of length n
-    create_sequence(N,1,N,seq);
+    create_sequence(N,1,100,seq);
         
     #Create Query-Files
     query_files = []

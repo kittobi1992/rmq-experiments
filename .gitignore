@@ -5,6 +5,8 @@ results/
 results/*
 benchmark/
 benchmark/*
+pizza&chilli/
+pizza&chilli/*
 *.png
 *.html
 *.seq
