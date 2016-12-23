@@ -223,6 +223,7 @@ int main(int argc, char *argv[]) {
     string algo4 = "RMQ_SDSL_BP_FAST_4096";
     string algo5 = "RMQ_SDSL_BP_FAST_REC_512";
     string algo6 = "RMQ_SDSL_BP_FAST_REC_1024";
+    string algo7 = "RMQ_SDSL_BP_FAST_REC_OLD_1024";
     {
         //RMQExperiment<rmq_succinct_sct<>> rmq1(algo1,&A,qv);
     }
@@ -245,6 +246,10 @@ int main(int argc, char *argv[]) {
    
     {
         RMQExperiment<rmq_succinct_rec<1024>> rmq6(algo6,&A,qv);
+    }
+    
+    {
+        RMQExperiment<rmq_succinct_rec_old<1024>> rmq6(algo7,&A,qv);
     }
     
     {

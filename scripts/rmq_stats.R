@@ -130,8 +130,8 @@ timing_plot <- function(timings, title="Title") {
 
 #==========Experiment===========#
 experiment_dir="/home/theuer/Dokumente/rmq-experiments/results/"
-date="2016-12-22"
-seq_type="random"
+date="2016-12-23"
+seq_type="decreasing"
 max_length="8"
 delta="0"
 tmp <- cbind(date,"rmq_experiment",seq_type,max_length,delta)
@@ -160,7 +160,7 @@ bpe_plot(c, title = "Bits per Element with increasing sequence length")
 #construction_plot(d,title = "Construction time for increasing N")
 
 experiment_dir="/home/theuer/Dokumente/rmq-experiments/results/"
-date="2016-12-22"
+date="2016-12-23"
 seq_type="random"
 max_length="8"
 delta="0"
