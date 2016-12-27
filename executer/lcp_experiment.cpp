@@ -200,7 +200,7 @@ int main(int argc, char *argv[]) {
     }
     
     
-    {
+    /*{
         rmq_succinct_bp_fast<1024> rmq(&lcp);
         cout << "Start Suffix-Tree Traversion for RMQ " << algo2 << "..." << endl;
         s = time();
@@ -208,7 +208,7 @@ int main(int argc, char *argv[]) {
         e = time();
         double t = seconds();
         std::cout << "LCP_RESULT Benchmark=" << test_id << " Algo=" << algo2 << " Time=" << t << std::endl;
-    }
+    }*/
     
     {
         rmq_succinct_sct<> rmq(&lcp);
