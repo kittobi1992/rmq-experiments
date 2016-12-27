@@ -132,7 +132,7 @@ def experiment(P,dirname):
         #Create Query-Files
         query_files = []
         Q = []
-        for i in range(2,int(np.log10(n))):
+        for i in range(1,int(np.log10(n))):
             qry = 'benchmark/' + str(pow(10,i)) + '.qry'
             query_files += [qry]
             Q += [pow(10,i)]

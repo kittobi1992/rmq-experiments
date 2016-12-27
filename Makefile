@@ -28,7 +28,7 @@ executer/timing_experiment.o: executer/timing_experiment.cpp ../sdsl-lite/build/
 			      $(CC) $(CFLAGS) $(SDSL_PREFIX) executer/timing_experiment.cpp -o executer/timing_experiment.o $(SDSL_SUFFIX)
 
 executer/lcp_experiment.o:    executer/lcp_experiment.cpp ../sdsl-lite/build/lib/libsdsl.a
-			      $(CC) $(CFLAGS) $(SDSL_PREFIX) executer/lcp_experiment.cpp -o executer/lcp_experiment.o $(SDSL_SUFFIX)
+			      $(CC) $(CFLAGS) $(SDSL_PREFIX) executer/lcp_experiment.cpp -o executer/lcp_experiment.o $(SDSL_SUFFIX) $(FERRADA_LIB) $(SUCCINCT_LIB)
 	     
 ../sdsl-lite/build/lib/libsdsl.a:   $(wildcard ../sdsl-lite/include/sdsl/*)
 				    rm -f $@

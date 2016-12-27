@@ -130,8 +130,8 @@ timing_plot <- function(timings, title="Title") {
 
 #==========Experiment===========#
 experiment_dir="/home/theuer/Dokumente/rmq-experiments/results/"
-date="2016-12-23"
-seq_type="decreasing"
+date="2016-12-27"
+seq_type="random"
 max_length="8"
 delta="0"
 tmp <- cbind(date,"rmq_experiment",seq_type,max_length,delta)
@@ -150,7 +150,7 @@ max_n = log10(max(query$N))
 for (n in  (7:max_n)) {
   query_sub <- subset(query,query$N == 10^n)
   tmp_title <- cbind("Sequence length N=10^",n," (",seq_type," values) and increasing query ranges");
-  query_plot(query_sub, title = str_c(tmp_title,collapse=""),thres=7.5)
+  query_plot(query_sub, title = str_c(tmp_title,collapse=""),thres=5)
 }
 
 c <- read.csv2(paste(experiment,"/construct_result.csv",sep=""),sep=",",header=TRUE)
