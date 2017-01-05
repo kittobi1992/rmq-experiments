@@ -100,7 +100,7 @@ public:
         
         for(size_t i = 0; i < qry.size(); ++i) {
             c_stats.addConstructionResult(seq->size(),milliseconds(),
-                                          static_cast<double>(size_in_bytes(rmq)*8)/static_cast<double>(seq->size()));
+                                          8.0*(static_cast<double>(size_in_bytes(rmq))/static_cast<double>(seq->size())));
         }
         c_stats.printConstructionStats();
         write_structure<HTML_FORMAT>(rmq, "HTML/"+algo+".html");
@@ -139,7 +139,7 @@ void executeRMQFerrada(long int *A, size_t N, vector<vector<query>>& qry) {
     e = time();
     
     c_stats.addConstructionResult(N,milliseconds(),
-                                  static_cast<double>(rmq.getSize()*8)/static_cast<double>(N));
+                                  8.0*(static_cast<double>(rmq.getSize())/static_cast<double>(N)));
     c_stats.printConstructionStats();
     
     for(int i = 0; i < qry.size(); ++i) {
@@ -248,9 +248,9 @@ int main(int argc, char *argv[]) {
         RMQExperiment<rmq_succinct_rec<1024>> rmq6(algo6,&A,qv);
     }
     
-    {
+    /*{
         RMQExperiment<rmq_succinct_rec_old<1024>> rmq6(algo7,&A,qv);
-    }
+    }*/
     
     {
         RMQExperiment<rmq_succinct_sct<>> rmq6(algo1,&A,qv);
@@ -268,16 +268,20 @@ int main(int argc, char *argv[]) {
         executeRMQFerrada(B,N,qv);
     } 
     
+    if(N < std::numeric_limits<int>::max()) {
+        std::vector<long long> C(N);
+        for(size_t i = 0; i < N; ++i) {
+            C[i] = B[i];
+            if(C[i] != B[i]) return -1;
+        }
+        delete [] B;
     
-    std::vector<long long> C(N);
-    for(size_t i = 0; i < N; ++i) {
-        C[i] = B[i];
-        if(C[i] != B[i]) return -1;
+        {
+            executeRMQSuccinct(C,N,qv);
+        }
     }
-    delete [] B;
-    
-    {
-        executeRMQSuccinct(C,N,qv);
+    else {
+        delete [] B;
     }
     
     

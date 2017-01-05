@@ -27,10 +27,10 @@ theme_complete_bw <- function(base_size = 12, base_family = "") {
     #axis.ticks.margin =  unit(0.1, "cm"),
 
     legend.background =  element_blank(),
-    legend.margin =      unit(0.1, "cm"),
-    legend.key.height =  unit(0.5, "cm"),
-    legend.key.width =   unit(0.5, "cm"),
-    legend.text =        element_text(size = rel(0.8)),
+    legend.margin =      unit(0.25, "cm"),
+    legend.key.height =  unit(1.5, "cm"),
+    legend.key.width =   unit(1.5, "cm"),
+    legend.text =        element_text(size = rel(1.25)),
     legend.text.align =  NULL,
     legend.title =       element_blank(),
     legend.title.align = NULL,
@@ -57,11 +57,14 @@ theme_complete_bw <- function(base_size = 12, base_family = "") {
   )
 }
 
-query_plot <- function(d, title="Title", thres=4.0, aes_plot = aes(factor(Range),Time)) {
+query_plot <- function(d, title="", thres=4.0, aes_plot = aes(factor(Range),Time)) {
   d$Time <- as.numeric(as.character(d$Time))
   d$Range <- as.numeric(as.character(d$Range))
   d <- subset(d,d$Time <= thres)
   d <- subset(d,d$Algo != "RMQ_SDSL_BP")
+  d <- subset(d,d$Algo != "RMQ_SDSL_BP_FAST_REC_OLD_1024")
+  d$Algo  <- revalue(d$Algo, c("RMQ_FERRADA"="BP-Ferrada","RMQ_SDSL_SCT"="SDSL-OLD","RMQ_SUCCINCT"="SUCCINCT","RMQ_SDSL_BP_FAST_REC_1024"="SDSL-BP-REC"))
+  
 
   plot <- ggplot(d,aes_plot) + ggtitle(title)
   plot <- plot + geom_boxplot(aes(fill = factor(Algo)), outlier.size = 1)
@@ -71,22 +74,31 @@ query_plot <- function(d, title="Title", thres=4.0, aes_plot = aes(factor(Range)
   print(plot)
 }
 
-query_facet_plot <- function(d, title="Title", thres=4.0, aes_plot = aes(factor(Range),Time)) {
+input_size_plot <- function(d, title="", thres=4.0, aes_plot = aes(factor(N),Time)) {
   d$Time <- as.numeric(as.character(d$Time))
   d$Range <- as.numeric(as.character(d$Range))
   d <- subset(d,d$Time <= thres)
-
+  d <- subset(d,d$Algo != "RMQ_SDSL_BP")
+  d <- subset(d,d$Algo != "RMQ_SDSL_BP_FAST_REC_OLD_1024")
+  d$Algo  <- revalue(d$Algo, c("RMQ_FERRADA"="BP-Ferrada","RMQ_SDSL_SCT"="SDSL-OLD","RMQ_SUCCINCT"="SUCCINCT","RMQ_SDSL_BP_FAST_REC_1024"="SDSL-BP-REC"))
+  
+  
   plot <- ggplot(d,aes_plot) + ggtitle(title)
-  plot <- plot + geom_boxplot(aes(fill=factor(Algo)),outlier.size = 0.25) + facet_grid(~ Scan)
+  plot <- plot + geom_boxplot(aes(fill = factor(Algo)), outlier.size = 1)
   plot <- plot + ylab("Time [µs]")
-  plot <- plot + xlab("N")
+  plot <- plot + xlab("Range")
   plot <- plot + theme_complete_bw()
   print(plot)
 }
 
-bpe_plot <- function(c, title="Title", aes_plot = aes(factor(c$N),c$BPE)) {
+
+
+
+bpe_plot <- function(c, title="", aes_plot = aes(factor(c$N),c$BPE)) {
   c$BPE <- as.numeric(as.character(c$BPE))
-  c$Algo  <- revalue(c$Algo, c("RMQ_FERRADA"="FERRADA","RMQ_SDSL_BP"="SDSL-BP","RMQ_SDSL_SCT"="SDSL-SCT","RMQ_SDSL_BP_FAST_1024"="SDSL-BP-FAST-1024","RMQ_SDSL_BP_FAST_4096"="SDSL-BP-FAST-4096"))
+  c <- subset(c,c$Algo != "RMQ_SDSL_BP")
+  c <- subset(c,c$Algo != "RMQ_SDSL_BP_FAST_REC_OLD_1024")
+  c$Algo  <- revalue(c$Algo, c("RMQ_FERRADA"="BP-Ferrada","RMQ_SDSL_SCT"="SDSL-OLD","RMQ_SUCCINCT"="SUCCINCT","RMQ_SDSL_BP_FAST_REC_1024"="SDSL-BP-REC"))
   
   plot <- ggplot(c,aes(factor(c$N),c$BPE,group=c$Algo,label=round(c$BPE,digits=3))) + ggtitle(title)
   plot <- plot + geom_line(aes(colour=Algo)) + geom_text(vjust=0, check_overlap=TRUE)
@@ -95,7 +107,7 @@ bpe_plot <- function(c, title="Title", aes_plot = aes(factor(c$N),c$BPE)) {
   print(plot)
 }
 
-construction_plot <- function(c, title="Title") {
+construction_plot <- function(c, title="") {
   c$ConstructTime <- as.numeric(as.character(c$ConstructTime))
   c$Algo  <- revalue(c$Algo, c("RMQ_FERRADA"="FERRADA","RMQ_SDSL_BP"="SDSL-BP","RMQ_SDSL_SCT"="SDSL-SCT","RMQ_SDSL_BP_FAST_1024"="SDSL-BP-FAST-1024","RMQ_SDSL_BP_FAST_4096"="SDSL-BP-FAST-4096"))
   
@@ -114,7 +126,7 @@ aggreg_timing = function(df) data.frame(Rank=mean(df$Rank),
                                         MinExcessIdx=mean(df$min_excess_idx),
                                         Other=mean(df$Other))
 
-timing_plot <- function(timings, title="Title") {
+timing_plot <- function(timings, title="") {
   timings <- ddply(timings,c("Range"),aggreg_timing)
   timings <- melt(timings, id.var="Range")
   timings$Range <- as.integer(timings$Range)
@@ -130,9 +142,9 @@ timing_plot <- function(timings, title="Title") {
 
 #==========Experiment===========#
 experiment_dir="/home/theuer/Dokumente/rmq-experiments/results/"
-date="2016-12-27"
+date="2017-01-04"
 seq_type="random"
-max_length="8"
+max_length="10"
 delta="0"
 tmp <- cbind(date,"rmq_experiment",seq_type,max_length,delta)
 experiment <- str_c(tmp,collapse='_');
@@ -149,14 +161,22 @@ max_n = log10(max(query$N))
 
 for (n in  (7:max_n)) {
   query_sub <- subset(query,query$N == 10^n)
-  tmp_title <- cbind("Sequence length N=10^",n," (",seq_type," values) and increasing query ranges");
-  query_plot(query_sub, title = str_c(tmp_title,collapse=""),thres=5)
+  t <- 7.5
+  if(n == 10) {
+    t <- 25.0
+  }
+  query_plot(query_sub,thres=t)
 }
+
+range_sub <- subset(query,query$Range == 10000 & query$N < 10^10)
+input_size_plot(range_sub,thres=7.5)
+range_sub <- subset(query,query$Range == 100000 & query$N < 10^10)
+input_size_plot(range_sub,thres=7.5)
 
 c <- read.csv2(paste(experiment,"/construct_result.csv",sep=""),sep=",",header=TRUE)
 c$N <- as.numeric(as.character(c$N))
 c$BPE <- as.numeric(as.character(c$BPE))
-bpe_plot(c, title = "Bits per Element with increasing sequence length")
+bpe_plot(c)
 #construction_plot(d,title = "Construction time for increasing N")
 
 experiment_dir="/home/theuer/Dokumente/rmq-experiments/results/"

@@ -47,10 +47,10 @@ theme_complete_bw <- function(base_size = 12, base_family = "") {
 }
 
 
-lcp_plot <- function(lcp, title="Title") {
+lcp_plot <- function(lcp, title="") {
   
-  plot <- ggplot(data=lcp,aes(x=Algo,y=Time,fill=Algo)) + geom_bar(stat="identity")  + ggtitle(title)
-  plot <- plot + facet_wrap(~ Benchmark, scales="free")  
+  plot <- ggplot(data=lcp,aes(x=Algo,y=Time,fill=Algo,label=round(Time,digits=2))) + geom_bar(stat="identity")
+  plot <- plot + facet_wrap(~ Benchmark, scales="free") + geom_text(vjust=-0.075, check_overlap=TRUE)
   plot <- plot + ylab("Time [s]")
   #plot <- plot + xlab("Range")
   plot <- plot + theme_complete_bw()
@@ -59,11 +59,11 @@ lcp_plot <- function(lcp, title="Title") {
 
 #==========Experiment===========#
 experiment_dir="/home/theuer/Dokumente/rmq-experiments/results/"
-date="2016-12-27"
+date="2016-12-28"
 tmp <- cbind(date,"lcp_experiment")
 experiment <- str_c(tmp,collapse='_');
 experiment <- paste(experiment_dir,experiment,sep="")
 
 lcp <- read.csv2(paste(experiment,"/lcp_result.csv",sep=""),sep=",",header=TRUE)
-lcp$Time <- as.integer(as.character(lcp$Time))
+lcp$Time <- as.numeric(as.character(lcp$Time))
 lcp_plot(lcp,title="Suffix-Tree-Traversion on Pizza&Chilli Benchmarks")
