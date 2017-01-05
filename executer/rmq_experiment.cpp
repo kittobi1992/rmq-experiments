@@ -10,6 +10,7 @@
 
 #include "../rmq/includes/RMQRMM64.h"
 #include "../succinct/cartesian_tree.hpp"
+#include "../succinct/mapper.hpp"
 
 #define MILLI 1000
 #define MICRO 1000000
@@ -166,7 +167,9 @@ void executeRMQSuccinct(std::vector<long long>& A, size_t N, vector<vector<query
     succinct::cartesian_tree rmq(A);
     e = time();
     
-    c_stats.addConstructionResult(N,milliseconds(),3.0);
+    double size_succinct = 8.0*(static_cast<double>(succinct::mapper::size_of<succinct::cartesian_tree>(rmq))/static_cast<double>(N));
+    
+    c_stats.addConstructionResult(N,milliseconds(),size_succinct);
     c_stats.printConstructionStats();
     
     for(int i = 0; i < qry.size(); ++i) {

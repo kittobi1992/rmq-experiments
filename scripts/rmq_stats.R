@@ -57,7 +57,9 @@ theme_complete_bw <- function(base_size = 12, base_family = "") {
   )
 }
 
-query_plot <- function(d, title="", thres=4.0, aes_plot = aes(factor(Range),Time)) {
+#Plot for experiments with fixed input size and varying Query Ranges
+#DataFrame d must only contain the results for a fixed input size
+query_range_time_plot <- function(d, title="", thres=4.0, aes_plot = aes(factor(Range),Time)) {
   d$Time <- as.numeric(as.character(d$Time))
   d$Range <- as.numeric(as.character(d$Range))
   d <- subset(d,d$Time <= thres)
@@ -74,7 +76,9 @@ query_plot <- function(d, title="", thres=4.0, aes_plot = aes(factor(Range),Time
   print(plot)
 }
 
-input_size_plot <- function(d, title="", thres=4.0, aes_plot = aes(factor(N),Time)) {
+#Plot for experiments with fixed query range and varying input sizes
+#DataFrame d must only contain the results for a fixed query range
+input_size_time_plot <- function(d, title="", thres=4.0, aes_plot = aes(factor(N),Time)) {
   d$Time <- as.numeric(as.character(d$Time))
   d$Range <- as.numeric(as.character(d$Range))
   d <- subset(d,d$Time <= thres)
@@ -91,9 +95,8 @@ input_size_plot <- function(d, title="", thres=4.0, aes_plot = aes(factor(N),Tim
   print(plot)
 }
 
-
-
-
+#Plot which visualize the space consumption of the different algorithms
+#Space consumption is measured in "Bits per Element"
 bpe_plot <- function(c, title="", aes_plot = aes(factor(c$N),c$BPE)) {
   c$BPE <- as.numeric(as.character(c$BPE))
   c <- subset(c,c$Algo != "RMQ_SDSL_BP")
@@ -107,11 +110,12 @@ bpe_plot <- function(c, title="", aes_plot = aes(factor(c$N),c$BPE)) {
   print(plot)
 }
 
-construction_plot <- function(c, title="") {
+#Plot which visualize the construction time of the different algorithms
+construction_time_plot <- function(c, title="") {
   c$ConstructTime <- as.numeric(as.character(c$ConstructTime))
-  c$Algo  <- revalue(c$Algo, c("RMQ_FERRADA"="FERRADA","RMQ_SDSL_BP"="SDSL-BP","RMQ_SDSL_SCT"="SDSL-SCT","RMQ_SDSL_BP_FAST_1024"="SDSL-BP-FAST-1024","RMQ_SDSL_BP_FAST_4096"="SDSL-BP-FAST-4096"))
+  c$Algo  <- revalue(c$Algo, c("RMQ_FERRADA"="BP-Ferrada","RMQ_SDSL_SCT"="SDSL-OLD","RMQ_SUCCINCT"="SUCCINCT","RMQ_SDSL_BP_FAST_REC_1024"="SDSL-BP-REC"))
   
-  plot <- ggplot(c,aes(factor(c$N),d$ConstructTime,group=factor(Algo))) + ggtitle(title)
+  plot <- ggplot(c,aes(factor(c$N),c$ConstructTime,group=factor(Algo))) + ggtitle(title)
   plot <- plot + geom_line(aes(colour=Algo))
   plot <- plot + scale_y_continuous(name = "Construction Time [s]")
   plot <- plot + theme_complete_bw()
@@ -126,7 +130,8 @@ aggreg_timing = function(df) data.frame(Rank=mean(df$Rank),
                                         MinExcessIdx=mean(df$min_excess_idx),
                                         Other=mean(df$Other))
 
-timing_plot <- function(timings, title="") {
+#This function visualize the internal timings of our RMQ-Query-Implementation
+internal_timings_plot <- function(timings, title="") {
   timings <- ddply(timings,c("Range"),aggreg_timing)
   timings <- melt(timings, id.var="Range")
   timings$Range <- as.integer(timings$Range)
@@ -162,25 +167,20 @@ max_n = log10(max(query$N))
 for (n in  (7:max_n)) {
   query_sub <- subset(query,query$N == 10^n)
   t <- 7.5
-  if(n == 10) {
-    t <- 25.0
-  }
-  query_plot(query_sub,thres=t)
+  query_range_time_plot(query_sub,thres=t)
 }
 
-range_sub <- subset(query,query$Range == 10000 & query$N < 10^10)
-input_size_plot(range_sub,thres=7.5)
-range_sub <- subset(query,query$Range == 100000 & query$N < 10^10)
-input_size_plot(range_sub,thres=7.5)
+#range_sub <- subset(query,query$Range == 10000 & query$N < 10^10)
+#input_size_time_plot(range_sub,thres=7.5)
 
 c <- read.csv2(paste(experiment,"/construct_result.csv",sep=""),sep=",",header=TRUE)
 c$N <- as.numeric(as.character(c$N))
 c$BPE <- as.numeric(as.character(c$BPE))
 bpe_plot(c)
-#construction_plot(d,title = "Construction time for increasing N")
+#construction_time_plot(c)
 
 experiment_dir="/home/theuer/Dokumente/rmq-experiments/results/"
-date="2016-12-23"
+date="2016-01-05"
 seq_type="random"
 max_length="8"
 delta="0"
@@ -198,4 +198,4 @@ timings$min_excess <- as.integer(as.character(timings$min_excess))
 timings$min_excess_idx <- as.integer(as.character(timings$min_excess_idx))
 timings$Other <- as.integer(as.character(timings$Other))
 tmp_title <- cbind("Operation timings for sequence of length N=10^",max_length," (",seq_type," values) and increasing query ranges");
-timing_plot(timings,title=str_c(tmp_title,collapse=""))
+internal_timings_plot(timings)
