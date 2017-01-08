@@ -3,7 +3,9 @@
 #include <random>
 #include <fstream>
 #include <iostream>
- 
+
+namespace sequence {
+
 using ll = long long;
 ll min_value = 1LL;
 ll max_value = static_cast<ll>(std::numeric_limits<ll>::max());
@@ -103,13 +105,14 @@ void writeEqualSequence(config& con, std::ofstream& os) {
     }
 }
 
+}
 
 int main(int argc, char* const argv[]) {
     
     
     std::ios::sync_with_stdio(false);
     
-    config con = parse_args(argc,argv);
+    sequence::config con = sequence::parse_args(argc,argv);
     con.printConfig();
 	
     printf("Generating random sequence...\n");
@@ -117,13 +120,13 @@ int main(int argc, char* const argv[]) {
     os.open(con.ofile);
     os << con.N << "\n";
     switch(con.pseudo_sorted) {
-        case 0: writeRandomSequence(con,os);
+        case 0: sequence::writeRandomSequence(con,os);
                 break;
-        case 1: writePseudoSortedIncreasingSequence(con,os);
+        case 1: sequence::writePseudoSortedIncreasingSequence(con,os);
                 break;
-        case 2: writePseudoSortedDecreasingSequence(con,os);
+        case 2: sequence::writePseudoSortedDecreasingSequence(con,os);
                 break;
-        case 3: writeEqualSequence(con,os);
+        case 3: sequence::writeEqualSequence(con,os);
                 break;
         default: break;
     }

@@ -6,6 +6,8 @@
 
 using ll = long long;
 
+namespace query {
+
 struct config {
     ll N;
     ll q; 
@@ -55,12 +57,14 @@ config parse_args(int argc, char* const argv[]) {
     return con;
 }
 
+}
+
 int main(int argc, char* const argv[]) {
     
     
     std::ios::sync_with_stdio(false);
     
-    config con = parse_args(argc,argv);
+    query::config con = query::parse_args(argc,argv);
     con.printConfig();
     
     std::random_device rd;

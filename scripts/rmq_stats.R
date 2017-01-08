@@ -57,6 +57,25 @@ theme_complete_bw <- function(base_size = 12, base_family = "") {
   )
 }
 
+#Plot for experiments with fixed input size and varying Query Ranges for our new RMQ implementations
+#DataFrame d must only contain the results for a fixed input size
+query_range_time_plot_for_sdsl_implementation <- function(d, title="", thres=4.0, aes_plot = aes(factor(Range),Time)) {
+  d$Time <- as.numeric(as.character(d$Time))
+  d$Range <- as.numeric(as.character(d$Range))
+  d <- subset(d,d$Time <= thres)
+  d <- subset(d,d$Algo != "RMQ_SDSL_BP")
+  d <- subset(d,d$Algo != "RMQ_SDSL_BP_FAST_REC_OLD_1024")
+  d$Algo  <- revalue(d$Algo, c("RMQ_SDSL_BP_FAST_REC_1024"="SDSL-BP-REC-1024","RMQ_SDSL_BP_FAST_REC_512"="SDSL-BP-REC-512","RMQ_SDSL_BP_FAST_1024"="SDSL-BP-1024","RMQ_SDSL_BP_FAST_4096"="SDSL-BP-REC-4096"))
+  
+  
+  plot <- ggplot(d,aes_plot) + ggtitle(title)
+  plot <- plot + geom_boxplot(aes(fill = factor(Algo)), outlier.size = 1)
+  plot <- plot + ylab("Time [µs]")
+  plot <- plot + xlab("N")
+  plot <- plot + theme_complete_bw()
+  print(plot)
+}
+
 #Plot for experiments with fixed input size and varying Query Ranges
 #DataFrame d must only contain the results for a fixed input size
 query_range_time_plot <- function(d, title="", thres=4.0, aes_plot = aes(factor(Range),Time)) {
@@ -91,6 +110,21 @@ input_size_time_plot <- function(d, title="", thres=4.0, aes_plot = aes(factor(N
   plot <- plot + geom_boxplot(aes(fill = factor(Algo)), outlier.size = 1)
   plot <- plot + ylab("Time [µs]")
   plot <- plot + xlab("Range")
+  plot <- plot + theme_complete_bw()
+  print(plot)
+}
+
+#Plot which visualize the space consumption of the different algorithms for our new RMQ implementations
+#Space consumption is measured in "Bits per Element"
+bpe_plot_for_sdsl_implementation <- function(c, title="", aes_plot = aes(factor(c$N),c$BPE)) {
+  c$BPE <- as.numeric(as.character(c$BPE))
+  c <- subset(c,c$Algo != "RMQ_SDSL_BP")
+  c <- subset(c,c$Algo != "RMQ_SDSL_BP_FAST_REC_OLD_1024")
+  c$Algo  <- revalue(c$Algo, c("RMQ_SDSL_BP_FAST_REC_1024"="SDSL-BP-REC-1024","RMQ_SDSL_BP_FAST_REC_512"="SDSL-BP-REC-512","RMQ_SDSL_BP_FAST_1024"="SDSL-BP-1024","RMQ_SDSL_BP_FAST_4096"="SDSL-BP-REC-4096"))
+  
+  plot <- ggplot(c,aes(factor(c$N),c$BPE,group=c$Algo,label=round(c$BPE,digits=3))) + ggtitle(title)
+  plot <- plot + geom_line(aes(colour=Algo)) + geom_text(vjust=0, check_overlap=TRUE)
+  plot <- plot + scale_y_continuous(name = "Bits per Element")
   plot <- plot + theme_complete_bw()
   print(plot)
 }
@@ -147,7 +181,7 @@ internal_timings_plot <- function(timings, title="") {
 
 #==========Experiment===========#
 experiment_dir="/home/theuer/Dokumente/rmq-experiments/results/"
-date="2017-01-04"
+date="2017-01-06"
 seq_type="random"
 max_length="10"
 delta="0"
@@ -156,6 +190,7 @@ experiment <- str_c(tmp,collapse='_');
 experiment <- paste(experiment_dir,experiment,sep="")
 
 query <- read.csv2(paste(experiment,"/query_result.csv",sep=""),sep=",",header=TRUE)
+query <- subset(query,query$Algo != "RMQ_SDSL_SCT")
 query$Time <- as.numeric(as.character(query$Time))
 query$Range <- as.numeric(as.character(query$Range))
 query$N <- as.numeric(as.character(query$N))
@@ -164,25 +199,26 @@ query$Scan <- as.numeric(as.character(query$Scan))
 min_n = log10(min(query$N))
 max_n = log10(max(query$N))
 
-for (n in  (7:max_n)) {
+for (n in  (8:max_n)) {
   query_sub <- subset(query,query$N == 10^n)
-  t <- 7.5
-  query_range_time_plot(query_sub,thres=t)
+  t <- 5
+  query_range_time_plot_for_sdsl_implementation(query_sub,thres=t)
 }
 
 #range_sub <- subset(query,query$Range == 10000 & query$N < 10^10)
 #input_size_time_plot(range_sub,thres=7.5)
 
 c <- read.csv2(paste(experiment,"/construct_result.csv",sep=""),sep=",",header=TRUE)
+c <- subset(c,c$Algo != "RMQ_SDSL_SCT")
 c$N <- as.numeric(as.character(c$N))
 c$BPE <- as.numeric(as.character(c$BPE))
-bpe_plot(c)
+bpe_plot_for_sdsl_implementation(c)
 #construction_time_plot(c)
 
 experiment_dir="/home/theuer/Dokumente/rmq-experiments/results/"
-date="2016-01-05"
+date="2017-01-05"
 seq_type="random"
-max_length="8"
+max_length="9"
 delta="0"
 tmp <- cbind(date,"rmq_experiment",seq_type,max_length,delta,"timings")
 experiment <- str_c(tmp,collapse='_');

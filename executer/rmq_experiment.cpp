@@ -171,7 +171,7 @@ void executeRMQSuccinct(std::vector<long long>& A, size_t N, vector<vector<query
     
     c_stats.addConstructionResult(N,milliseconds(),size_succinct);
     c_stats.printConstructionStats();
-    
+     
     for(int i = 0; i < qry.size(); ++i) {
         q_stats[i].N = N;
         for(int j = 0; j < qry[i].size(); ++j) {
@@ -256,7 +256,7 @@ int main(int argc, char *argv[]) {
     }*/
     
     {
-        RMQExperiment<rmq_succinct_sct<>> rmq6(algo1,&A,qv);
+        RMQExperiment<rmq_succinct_sct<>> rmq7(algo1,&A,qv);
     }
     
     long int *B = new long int[N];

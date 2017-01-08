@@ -4,10 +4,14 @@ SDSL_PREFIX=-DNDEBUG -I ~/include -L ~/lib
 SDSL_SUFFIX=-lsdsl -ldivsufsort -ldivsufsort64
 FERRADA_LIB=rmq/rmqrmmBP.a
 SUCCINCT_LIB=succinct/libsuccinct.a
+SANITIZE=-g -fsanitize=address
 
 all: experiments
 
 experiments: generators/gen_sequence.o generators/gen_query.o executer/rmq_experiment.o executer/timing_experiment.o executer/lcp_experiment.o
+
+ferrada: executer/ferrada_experiment.cpp
+	$(CC) $(CFLAGS) executer/ferrada_experiment.cpp -o executer/ferrada_experiment.o $(FERRADA_LIB)
 
 rmq/RMQRMM64.o: rmq/RMQRMM64.cpp
 	        cd rmq && $(MAKE)
