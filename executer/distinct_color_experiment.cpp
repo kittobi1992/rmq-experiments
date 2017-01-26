@@ -7,6 +7,7 @@
 #include <iostream>
 #include <chrono>
 #include <climits>
+#include <queue>
 
 #include "../rmq/includes/RMQRMM64.h"
 #include "../succinct/cartesian_tree.hpp"
@@ -32,22 +33,22 @@ struct query_stats {
     double bits_per_element;
     std::vector<query> q;
     std::vector<double> q_time;
-    std::vector<bool> use_scan;
+    std::vector<size_t> distinct;
     string algo;
     
     query_stats(string& algo) : algo(algo) { }
     
-    void addQueryResult(query& qu, double time, bool scan) {
+    void addQueryResult(query& qu, double time, size_t dist) {
         q.push_back(qu);
         q_time.push_back(time);
-        use_scan.push_back(scan);
+        distinct.push_back(dist);
     }
     
     
     void printQueryStats() {
         for(size_t i = 0; i < q.size(); ++i) {
             ll range = q[i].second - q[i].first + 1;
-            printf("QUERY_RESULT Algo=%s N=%zu Range=%lld Time=%f Scan=%s\n", algo.c_str(), N, range, q_time[i], use_scan[i] ? "true" : "false");
+            printf("QUERY_RESULT Algo=%s N=%zu Range=%lld Time=%f Distinct=%zu\n", algo.c_str(), N, range, q_time[i], distinct[i]);
         }
     }
     
@@ -100,7 +101,7 @@ public:
         e = time();
         
         for(size_t i = 0; i < qry.size(); ++i) {
-            c_stats.addConstructionResult(seq->size(),milliseconds(),
+            c_stats.addConstructionResult(seq->size()-1,milliseconds(),
                                           8.0*(static_cast<double>(size_in_bytes(rmq))/static_cast<double>(seq->size())));
         }
         c_stats.printConstructionStats();
@@ -109,14 +110,26 @@ public:
         
         ofstream out("benchmark/"+algo+".txt");
         for(int i = 0; i < qry.size(); ++i) {
-            q_stats[i].N = seq->size();
+            q_stats[i].N = seq->size()-1;
             for(int j = 0; j < qry[i].size(); ++j) {
-                ll i1 = qry[i][j].first, i2 = qry[i][j].second;
+                ll i1 = qry[i][j].first+1, i2 = qry[i][j].second+1;
                 s = time();
-                auto res = rmq(i1,i2);
+                size_t distinct = 0;
+                std::queue<query> q; q.push(make_pair(i1,i2));
+                while(!q.empty()) {
+                  query qy = q.front(); q.pop();
+                  ll l = qy.first, r = qy.second;
+                  ll i_min = rmq(l,r);
+//                   std::cout << l << " " << r << " "<< i_min << " " << (*seq)[i_min] << " "  << i1 << " " << i2 <<  std::endl;
+                  if((*seq)[i_min] < i1) {
+                    distinct++;
+                    if((i_min-1)-l >= 0) q.push(make_pair(l,i_min-1));
+                    if(r-(i_min+1) >= 0) q.push(make_pair(i_min+1,r));
+                  }
+                }
                 e = time();
-                out << res << "\n";
-                q_stats[i].addQueryResult(qry[i][j],microseconds(),rand()%2);
+                out << distinct << "\n";
+                q_stats[i].addQueryResult(qry[i][j],microseconds(),distinct);
             }
             q_stats[i].printQueryStats();
         }
@@ -136,7 +149,7 @@ void executeRMQFerrada(long int *A, size_t N, vector<vector<query>>& qry) {
     construction_stats c_stats(algo);
     
     s = time();
-    RMQRMM64 rmq(A,N);
+    RMQRMM64 rmq(A,N+1);
     e = time();
     
     c_stats.addConstructionResult(N,milliseconds(),
@@ -146,12 +159,23 @@ void executeRMQFerrada(long int *A, size_t N, vector<vector<query>>& qry) {
     for(int i = 0; i < qry.size(); ++i) {
         q_stats[i].N = N;
         for(int j = 0; j < qry[i].size(); ++j) {
-            ll i1 = qry[i][j].first, i2 = qry[i][j].second;
+            ll i1 = qry[i][j].first+1, i2 = qry[i][j].second+1;
             if(i1 > ULONG_MAX || i2 > ULONG_MAX) continue;
             s = time();
-            auto res = rmq.queryRMQ(i1,i2);
+            size_t distinct = 0;
+            std::queue<query> q; q.push(make_pair(i1,i2));
+            while(!q.empty()) {
+              query qy = q.front(); q.pop();
+              ll l = qy.first, r = qy.second;
+              ll i_min = rmq.queryRMQ(l,r);
+              if(A[i_min] < i1) {
+                distinct++;
+                if((i_min-1)-l >= 0) q.push(make_pair(l,i_min-1));
+                if(r-(i_min+1) >= 0) q.push(make_pair(i_min+1,r));
+              }
+            }
             e = time();
-            q_stats[i].addQueryResult(qry[i][j],microseconds(),rand()%2);
+            q_stats[i].addQueryResult(qry[i][j],microseconds(),distinct);
         }
         q_stats[i].printQueryStats();
     }
@@ -175,12 +199,23 @@ void executeRMQSuccinct(std::vector<long long>& A, size_t N, vector<vector<query
     for(int i = 0; i < qry.size(); ++i) {
         q_stats[i].N = N;
         for(int j = 0; j < qry[i].size(); ++j) {
-            uint64_t i1 = qry[i][j].first, i2 = qry[i][j].second;
+            uint64_t i1 = qry[i][j].first+1, i2 = qry[i][j].second+1;
             if(i1 > ULONG_MAX || i2 > ULONG_MAX) continue;
             s = time();
-            auto res = rmq.rmq(i1,i2);
+            size_t distinct = 0;
+            std::queue<query> q; q.push(make_pair(i1,i2));
+            while(!q.empty()) {
+              query qy = q.front(); q.pop();
+              ll l = qy.first, r = qy.second;
+              ll i_min = rmq.rmq(l,r);
+              if(A[i_min] < i1) {
+                distinct++;
+                if((i_min-1)-l >= 0) q.push(make_pair(l,i_min-1));
+                if(r-(i_min+1) >= 0) q.push(make_pair(i_min+1,r));
+              }
+            }
             e = time();
-            q_stats[i].addQueryResult(qry[i][j],microseconds(),rand()%2);
+            q_stats[i].addQueryResult(qry[i][j],microseconds(),distinct);
         }
         q_stats[i].printQueryStats();
     }
@@ -206,6 +241,15 @@ int main(int argc, char *argv[]) {
     }
     is.close();
     
+    
+    std::vector<size_t> prev_occ(b-a+1,0);
+    int_vector<> prev(N+1);
+    for(size_t i = 0; i < N; ++i) {
+        prev[i+1] = prev_occ[A[i]-a];
+        prev_occ[A[i]-a] = i+1;
+    }
+    
+    memory_manager::clear(A);
     
     printf("Read Query Files...\n");
     int num_qry = atoi(argv[2]);
@@ -249,7 +293,7 @@ int main(int argc, char *argv[]) {
     }*/
    
     {
-        RMQExperiment<rmq_succinct_rec<1024>> rmq6(algo6,&A,qv);
+        RMQExperiment<rmq_succinct_rec<1024>> rmq6(algo6,&prev,qv);
     }
     
     /*{
@@ -257,15 +301,15 @@ int main(int argc, char *argv[]) {
     }*/
     
     {
-        RMQExperiment<rmq_succinct_sct<>> rmq7(algo1,&A,qv);
+        RMQExperiment<rmq_succinct_sct<>> rmq7(algo1,&prev,qv);
     }
     
-    long int *B = new long int[N];
-    for(size_t i = 0; i < N; ++i) {
-        B[i] = A[i];
-        if(B[i] != A[i]) return -1;
+    long int *B = new long int[N+1];
+    for(size_t i = 0; i < N+1; ++i) {
+        B[i] = prev[i];
+        if(B[i] != prev[i]) return -1;
     }
-    memory_manager::clear(A);
+    memory_manager::clear(prev);
     
   
     {
@@ -273,8 +317,8 @@ int main(int argc, char *argv[]) {
     } 
     
     if(N < std::numeric_limits<int>::max()) {
-        std::vector<long long> C(N);
-        for(size_t i = 0; i < N; ++i) {
+        std::vector<long long> C(N+1);
+        for(size_t i = 0; i < N+1; ++i) {
             C[i] = B[i];
             if(C[i] != B[i]) return -1;
         }

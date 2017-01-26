@@ -1,5 +1,6 @@
 #include <sdsl/rmq_support.hpp> // include header for range minimum queries
 #include <sdsl/suffix_arrays.hpp>
+#include <sdsl/suffix_trees.hpp>
 #include <sdsl/construct_lcp.hpp>
 #include <sdsl/construct_bwt.hpp>
 #include <algorithm>
@@ -73,6 +74,7 @@ void construct_lcp(cache_config& test_config, string& test_file) {
         cout << "Construct LCP Array..." << endl;
         construct_lcp_PHI<8>(test_config);
     }
+    
 }
 
 template<class RMQ>

@@ -118,7 +118,7 @@ int main(int argc, char* const argv[]) {
     printf("Generating random sequence...\n");
     std::ofstream os;
     os.open(con.ofile);
-    os << con.N << "\n";
+    os << con.N << " " << con.a << " " << con.b << "\n";
     switch(con.pseudo_sorted) {
         case 0: sequence::writeRandomSequence(con,os);
                 break;
