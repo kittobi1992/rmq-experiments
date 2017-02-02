@@ -62,8 +62,6 @@ query_range_time_plot_for_sdsl_implementation <- function(d, title="", thres=4.0
   d$Time <- as.numeric(as.character(d$Time))
   d$Range <- as.numeric(as.character(d$Range))
   d <- subset(d,d$Time <= thres)
-  d <- subset(d,d$Algo != "RMQ_SDSL_BP")
-  d <- subset(d,d$Algo != "RMQ_SDSL_BP_FAST_REC_1024")
   d$Algo  <- revalue(d$Algo, c("RMQ_SDSL_BP_FAST_REC_1024"="SDSL-BP-REC-1024","RMQ_SDSL_BP_FAST_REC_512"="SDSL-BP-REC-512","RMQ_SDSL_BP_FAST_1024"="SDSL-BP-1024","RMQ_SDSL_BP_FAST_4096"="SDSL-BP-REC-4096"))
   
   
@@ -197,7 +195,7 @@ query$N <- as.numeric(as.character(query$N))
 min_n = log10(min(query$N))
 max_n = log10(max(query$N))
 
-for (n in  (6:max_n)) {
+for (n in  (9:9)) {
   query_sub <- subset(query,query$N == 10^n)
   t <- 7.5
   query_range_time_plot_for_sdsl_implementation(query_sub,thres=t)

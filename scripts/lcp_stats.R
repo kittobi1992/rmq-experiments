@@ -13,8 +13,7 @@ theme_complete_bw <- function(base_size = 12, base_family = "") {
     rect =               element_rect(fill = "white", colour = "black", size = 0.5, linetype = 1),
     text =               element_text(family = base_family, face = "plain",
                             colour = "black", size = base_size,
-                            hjust = 0.5, vjust = 0.5, angle = 0, lineheight = 0.9,
-                            margin = margin(), debug = FALSE),
+                            hjust = 0.5, vjust = 0.5, angle = 0, lineheight = 0.9),
     axis.text =          element_text(size = rel(0.8), colour = "grey50"),
     strip.text =         element_text(size = base_size * 0.7),
     axis.line =          element_blank(),
@@ -59,11 +58,12 @@ lcp_plot <- function(lcp, title="") {
 
 #==========Experiment===========#
 experiment_dir="/home/theuer/Dokumente/rmq-experiments/results/"
-date="2016-12-28"
+date="2017-01-31"
 tmp <- cbind(date,"lcp_experiment")
 experiment <- str_c(tmp,collapse='_');
 experiment <- paste(experiment_dir,experiment,sep="")
 
 lcp <- read.csv2(paste(experiment,"/lcp_result.csv",sep=""),sep=",",header=TRUE)
+lcp <- subset(lcp, lcp$Benchmark != "text_pitches.sdsl")
 lcp$Time <- as.numeric(as.character(lcp$Time))
 lcp_plot(lcp,title="Suffix-Tree-Traversion on Pizza&Chilli Benchmarks")

@@ -186,7 +186,7 @@ int main(int argc, char *argv[]) {
     }
     
     string algo1 = "RMQ_SUCCINCT_REC_1024";
-    string algo2 = "RMQ_SUCCINCT_BP_FAST_1024";
+    string algo2 = "RMQ_SUCCINCT_REC_OLD_1024";
     string algo3 = "RMQ_SUCCINCT_SCT";
     string algo4 = "RMQ_FERRADA";
     string algo5 = "RMQ_SUCCINCT";
@@ -197,20 +197,24 @@ int main(int argc, char *argv[]) {
         s = time();
         traverseSuffixTree<rmq_succinct_rec<1024>>(rmq,lcp);
         e = time();
+        double percentage_avoided = (static_cast<double>(rmq.num_avoided_selects)/static_cast<double>(rmq.num_queries));
+        std::cout << rmq.num_avoided_selects << " out of " << rmq.num_queries << " queries (" << percentage_avoided << "%) avoids second select" << std::endl;
         double t = seconds();
         std::cout << "LCP_RESULT Benchmark=" << test_id << " Algo=" << algo1 << " Time=" << t << std::endl;
     }
     
     
-    /*{
-        rmq_succinct_bp_fast<1024> rmq(&lcp);
+    {
+        rmq_succinct_rec_old<1024> rmq(&lcp);
         cout << "Start Suffix-Tree Traversion for RMQ " << algo2 << "..." << endl;
         s = time();
-        traverseSuffixTree<rmq_succinct_bp_fast<1024>>(rmq,lcp);
+        traverseSuffixTree<rmq_succinct_rec_old<1024>>(rmq,lcp);
         e = time();
+        double percentage_avoided = (static_cast<double>(rmq.num_avoided_selects)/static_cast<double>(rmq.num_queries));
+        std::cout << rmq.num_avoided_selects << " out of " << rmq.num_queries << " queries (" << percentage_avoided << "%) avoids second select" << std::endl;
         double t = seconds();
         std::cout << "LCP_RESULT Benchmark=" << test_id << " Algo=" << algo2 << " Time=" << t << std::endl;
-    }*/
+    }
     
     {
         rmq_succinct_sct<> rmq(&lcp);
@@ -238,7 +242,7 @@ int main(int argc, char *argv[]) {
         std::cout << "LCP_RESULT Benchmark=" << test_id << " Algo=" << algo4 << " Time=" << t << std::endl;
     }
     
-    {
+    if(test_id != "proteins") {
         size_t N = lcp.size();
         std::vector<long long> C(N);
         for(size_t i = 0; i < N; ++i) {
