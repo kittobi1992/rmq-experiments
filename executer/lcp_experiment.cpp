@@ -78,7 +78,8 @@ void construct_lcp(cache_config& test_config, string& test_file) {
 }
 
 template<class RMQ>
-void traverseSuffixTree(RMQ& rmq, int_vector<> lcp) {
+size_t traverseSuffixTree(RMQ& rmq, int_vector<> lcp) {
+    size_t num_queries = 0;
     size_t N = rmq.size();
     stack<state> s; s.emplace(0,N-1,0);
     
@@ -92,12 +93,14 @@ void traverseSuffixTree(RMQ& rmq, int_vector<> lcp) {
         
         ll cur_i = cur.i;
         while(cur_i < cur.j) {
+            num_queries++;
             size_t min_i = rmq(cur_i+1,cur.j);
 //                           cout << cur_i << " " << cur.j << " " << min_i << endl;
             ll ii = cur_i; ll jj = cur.j-1;
             if(lcp[min_i] == cur.l && min_i < cur.j) jj = min_i-1;
             else if(lcp[min_i] != cur.l) jj = cur.j;
             if(ii+1 <= jj) {
+                num_queries++;
                 size_t l_idx = rmq(ii+1,jj);
                 s.emplace(ii,jj,lcp[l_idx]);
             }
@@ -106,9 +109,12 @@ void traverseSuffixTree(RMQ& rmq, int_vector<> lcp) {
         }
         
     }
+    
+    return num_queries;
 }
 
-void traverseSuffixTreeSuccinct(succinct::cartesian_tree& rmq, int_vector<> lcp) {
+size_t traverseSuffixTreeSuccinct(succinct::cartesian_tree& rmq, int_vector<> lcp) {
+    size_t num_queries = 0;
     size_t N = rmq.size();
     stack<state> s; s.emplace(0,N-1,0);
     
@@ -122,12 +128,14 @@ void traverseSuffixTreeSuccinct(succinct::cartesian_tree& rmq, int_vector<> lcp)
         
         ll cur_i = cur.i;
         while(cur_i < cur.j) {
+            num_queries++;
             size_t min_i = rmq.rmq(cur_i+1,cur.j);
             //               cout << cur_i << " " << cur.j << " " << min_i << endl;
             ll ii = cur_i; ll jj = cur.j-1;
             if(lcp[min_i] == cur.l && min_i < cur.j) jj = min_i-1;
             else if(lcp[min_i] != cur.l) jj = cur.j;
             if(ii+1 <= jj) {
+                num_queries++;
                 size_t l_idx = rmq.rmq(ii+1,jj);
                 s.emplace(ii,jj,lcp[l_idx]);
             }
@@ -136,9 +144,11 @@ void traverseSuffixTreeSuccinct(succinct::cartesian_tree& rmq, int_vector<> lcp)
         }
         
     }
+    return num_queries;
 }
 
-void traverseSuffixTreeFerrada(RMQRMM64& rmq, int_vector<> lcp) {
+size_t traverseSuffixTreeFerrada(RMQRMM64& rmq, int_vector<> lcp) {
+    size_t num_queries = 0;
     size_t N = lcp.size();
     stack<state> s; s.emplace(0,N-1,0);
     
@@ -152,12 +162,14 @@ void traverseSuffixTreeFerrada(RMQRMM64& rmq, int_vector<> lcp) {
         
         ll cur_i = cur.i;
         while(cur_i < cur.j) {
+            num_queries++;
             size_t min_i = N-rmq.queryRMQ(N-cur.j-1,N-(cur_i+1)-1)-1;
 //                           cout << cur_i << " " << cur.j << " " << min_i << endl;
             ll ii = cur_i; ll jj = cur.j-1;
             if(lcp[min_i] == cur.l && min_i < cur.j) jj = min_i-1;
             else if(lcp[min_i] != cur.l) jj = cur.j;
             if(ii+1 <= jj) {
+                num_queries++;
                 size_t l_idx = N-rmq.queryRMQ(N-jj-1,N-(ii+1)-1)-1;
                 s.emplace(ii,jj,lcp[l_idx]);
             }
@@ -166,6 +178,7 @@ void traverseSuffixTreeFerrada(RMQRMM64& rmq, int_vector<> lcp) {
         }
         
     }
+    return num_queries;
 }
 
 int main(int argc, char *argv[]) {
@@ -195,12 +208,12 @@ int main(int argc, char *argv[]) {
         rmq_succinct_rec<1024> rmq(&lcp);
         cout << "Start Suffix-Tree Traversion for RMQ " << algo1 << "..." << endl;
         s = time();
-        traverseSuffixTree<rmq_succinct_rec<1024>>(rmq,lcp);
+        size_t num_queries = traverseSuffixTree<rmq_succinct_rec<1024>>(rmq,lcp);
         e = time();
-        double percentage_avoided = (static_cast<double>(rmq.num_avoided_selects)/static_cast<double>(rmq.num_queries));
-        std::cout << rmq.num_avoided_selects << " out of " << rmq.num_queries << " queries (" << percentage_avoided << "%) avoids second select" << std::endl;
+        //double percentage_avoided = (static_cast<double>(rmq.num_avoided_selects)/static_cast<double>(rmq.num_queries));
+        //std::cout << rmq.num_avoided_selects << " out of " << rmq.num_queries << " queries (" << percentage_avoided << "%) avoids second select" << std::endl;
         double t = seconds();
-        std::cout << "LCP_RESULT Benchmark=" << test_id << " Algo=" << algo1 << " Time=" << t << std::endl;
+        std::cout << "LCP_RESULT Benchmark=" << test_id << " Algo=" << algo1 << " Time=" << t << " NumQueries=" << num_queries << std::endl;
     }
     
     
@@ -208,22 +221,22 @@ int main(int argc, char *argv[]) {
         rmq_succinct_rec_old<1024> rmq(&lcp);
         cout << "Start Suffix-Tree Traversion for RMQ " << algo2 << "..." << endl;
         s = time();
-        traverseSuffixTree<rmq_succinct_rec_old<1024>>(rmq,lcp);
+        size_t num_queries = traverseSuffixTree<rmq_succinct_rec_old<1024>>(rmq,lcp);
         e = time();
-        double percentage_avoided = (static_cast<double>(rmq.num_avoided_selects)/static_cast<double>(rmq.num_queries));
-        std::cout << rmq.num_avoided_selects << " out of " << rmq.num_queries << " queries (" << percentage_avoided << "%) avoids second select" << std::endl;
+        //double percentage_avoided = (static_cast<double>(rmq.num_avoided_selects)/static_cast<double>(rmq.num_queries));
+        //std::cout << rmq.num_avoided_selects << " out of " << rmq.num_queries << " queries (" << percentage_avoided << "%) avoids second select" << std::endl;
         double t = seconds();
-        std::cout << "LCP_RESULT Benchmark=" << test_id << " Algo=" << algo2 << " Time=" << t << std::endl;
+        std::cout << "LCP_RESULT Benchmark=" << test_id << " Algo=" << algo2 << " Time=" << t << " NumQueries=" << num_queries << std::endl;
     }
     
     {
         rmq_succinct_sct<> rmq(&lcp);
         cout << "Start Suffix-Tree Traversion for RMQ " << algo3 << "..." << endl;
         s = time();
-        traverseSuffixTree<rmq_succinct_sct<>>(rmq,lcp);
+        size_t num_queries = traverseSuffixTree<rmq_succinct_sct<>>(rmq,lcp);
         e = time();
         double t = seconds();
-        std::cout << "LCP_RESULT Benchmark=" << test_id << " Algo=" << algo3 << " Time=" << t << std::endl;
+        std::cout << "LCP_RESULT Benchmark=" << test_id << " Algo=" << algo3 << " Time=" << t << " NumQueries=" << num_queries << std::endl;
     }
     
     {
@@ -236,10 +249,10 @@ int main(int argc, char *argv[]) {
         delete [] B;
         cout << "Start Suffix-Tree Traversion for RMQ " << algo4 << "..." << endl;
         s = time();
-        traverseSuffixTreeFerrada(rmq,lcp);
+        size_t num_queries = traverseSuffixTreeFerrada(rmq,lcp);
         e = time();
         double t = seconds();
-        std::cout << "LCP_RESULT Benchmark=" << test_id << " Algo=" << algo4 << " Time=" << t << std::endl;
+        std::cout << "LCP_RESULT Benchmark=" << test_id << " Algo=" << algo4 << " Time=" << t << " NumQueries=" << num_queries << std::endl;
     }
     
     if(test_id != "proteins") {
@@ -251,10 +264,10 @@ int main(int argc, char *argv[]) {
         succinct::cartesian_tree rmq(C);
         cout << "Start Suffix-Tree Traversion for RMQ " << algo5 << "..." << endl;
         s = time();
-        traverseSuffixTreeSuccinct(rmq,lcp);
+        size_t num_queries = traverseSuffixTreeSuccinct(rmq,lcp);
         e = time();
         double t = seconds();
-        std::cout << "LCP_RESULT Benchmark=" << test_id << " Algo=" << algo5 << " Time=" << t << std::endl;
+        std::cout << "LCP_RESULT Benchmark=" << test_id << " Algo=" << algo5 << " Time=" << t << " NumQueries=" << num_queries << std::endl;
     }
     
 

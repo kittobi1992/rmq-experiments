@@ -32,6 +32,7 @@ def get_lcp_stats(out):
     res = [str(out.split('Benchmark=')[1].split()[0])]
     res += [str(out.split('Algo=')[1].split()[0])]
     res += [float(out.split('Time=')[1].split()[0])]
+    res += [long(out.split('NumQueries=')[1].split()[0])]
     return res
 
 
@@ -62,7 +63,7 @@ def experiment(dirname):
         for r in benchmark_res:
             lcp_res.append(get_lcp_stats(r));    
         
-    cols_lcp = ["Benchmark","Algo","Time"]
+    cols_lcp = ["Benchmark","Algo","Time","NumQueries"]
     df_lcp = pd.DataFrame(lcp_res,columns=cols_lcp)
     df_lcp.to_csv(dirname + '/lcp_result.csv')
     
