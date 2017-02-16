@@ -4,3 +4,6 @@
 [submodule "rmq"]
 	path = rmq
 	url = https://github.com/hferrada/rmq.git
+[submodule "sdsl-lite"]
+	path = sdsl-lite
+	url = https://github.com/kittobi1992/sdsl-lite.git

@@ -1,11 +1,11 @@
 *kateproject*
 *.o
 *.a
-results/
+!results/download.sh
 results/*
 benchmark/
 benchmark/*
-pizza&chilli/
+!pizza&chilli/download.sh
 pizza&chilli/*
 *.png
 *.html
