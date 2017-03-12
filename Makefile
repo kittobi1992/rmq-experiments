@@ -37,6 +37,6 @@ executer/timing_experiment.o: executer/timing_experiment.cpp sdsl-lite/build/lib
 executer/lcp_experiment.o:    executer/lcp_experiment.cpp sdsl-lite/build/lib/libsdsl.a
 			      $(CC) $(CFLAGS) $(SDSL_PREFIX) executer/lcp_experiment.cpp -o executer/lcp_experiment.o $(SDSL_SUFFIX) $(FERRADA_LIB) $(SUCCINCT_LIB)
 	     
-../sdsl-lite/build/lib/libsdsl.a:   $(wildcard sdsl-lite/include/sdsl/*)
+sdsl-lite/build/lib/libsdsl.a:   $(wildcard sdsl-lite/include/sdsl/*)
 				    rm -f $@
 				    bash -x sdsl-lite/build/build.sh

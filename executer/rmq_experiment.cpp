@@ -231,7 +231,7 @@ int main(int argc, char *argv[]) {
     string algo7 = "RMQ_SDSL_BP_FAST_REC_1024";
     string algo8 = "RMQ_SDSL_BP_FAST_REC_OLD_1024";
 
-    {
+    /*{
       string algo = "RMQ_SDSL_BP_FAST_512";
       RMQExperiment<rmq_succinct_bp_fast<512>> rmq(algo,&A,qv);
     }
@@ -254,14 +254,19 @@ int main(int argc, char *argv[]) {
     {
        string algo = "RMQ_SDSL_BP_FAST_REC_512";
        RMQExperiment<rmq_succinct_rec<512>> rmq(algo,&A,qv);
-    }
+    }*/
     
     {
        string algo = "RMQ_SDSL_BP_FAST_REC_1024";
        RMQExperiment<rmq_succinct_rec<1024>> rmq(algo,&A,qv);
     }
-    
+
     {
+       string algo = "RMQ_SDSL_BP_FAST_REC_NEW_1024";
+       RMQExperiment<rmq_succinct_rec_new<1024>> rmq(algo,&A,qv);
+    }
+    
+    /*{
        string algo = "RMQ_SDSL_BP_FAST_REC_2048";
        RMQExperiment<rmq_succinct_rec<2048>> rmq(algo,&A,qv);
     }
@@ -271,7 +276,7 @@ int main(int argc, char *argv[]) {
        RMQExperiment<rmq_succinct_rec<4096>> rmq(algo,&A,qv);
     }
     
-    /*{
+    {
         RMQExperiment<rmq_succinct_rec_old<1024>> rmq6(algo7,&A,qv);
     }*/
     
@@ -280,7 +285,7 @@ int main(int argc, char *argv[]) {
       RMQExperiment<rmq_succinct_sct<>> rmq(algo,&A,qv);
     }
     
-    /*long int *B = new long int[N];
+    long int *B = new long int[N];
     for(size_t i = 0; i < N; ++i) {
         B[i] = A[i];
         if(B[i] != A[i]) return -1;
@@ -306,7 +311,7 @@ int main(int argc, char *argv[]) {
     }
     else {
         delete [] B;
-    }*/
+    }
     
     
 }
