@@ -180,8 +180,8 @@ internal_timings_plot <- function(timings, title="") {
 
 #==========Experiment===========#
 experiment_dir="C:/Users/tobia/Documents/home/theuer/rmq-experiments/results/"
-date="2017-03-13"
-seq_type="decreasing"
+date="2017-03-15"
+seq_type="random"
 max_length="8"
 delta="0"
 tmp <- cbind(date,"rmq_experiment",seq_type,max_length,delta)

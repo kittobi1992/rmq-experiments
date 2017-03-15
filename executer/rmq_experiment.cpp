@@ -256,16 +256,27 @@ int main(int argc, char *argv[]) {
        RMQExperiment<rmq_succinct_rec<512>> rmq(algo,&A,qv);
     }*/
     
+
     {
-       string algo = "RMQ_SDSL_BP_FAST_REC_1024";
-       RMQExperiment<rmq_succinct_rec<1024>> rmq(algo,&A,qv);
+       string algo = "RMQ_SDSL_REC_NEW_4096_1";
+       RMQExperiment<rmq_succinct_rec_new<true, 4096, 0>> rmq(algo,&A,qv);
+    }
+
+        {
+       string algo = "RMQ_SDSL_REC_NEW_1024_1";
+       RMQExperiment<rmq_succinct_rec_new<true, 1024, 0>> rmq(algo,&A,qv);
     }
 
     {
-       string algo = "RMQ_SDSL_BP_FAST_REC_NEW_1024";
-       RMQExperiment<rmq_succinct_rec_new<1024>> rmq(algo,&A,qv);
+       string algo = "RMQ_SDSL_REC_NEW_1024_2";
+       RMQExperiment<rmq_succinct_rec_new<true, 1024,128,0>> rmq(algo,&A,qv);
     }
     
+    {
+       string algo = "RMQ_SDSL_REC_NEW_512_3";
+       RMQExperiment<rmq_succinct_rec_new<true, 512,128,64,0>> rmq(algo,&A,qv);
+    }
+
     /*{
        string algo = "RMQ_SDSL_BP_FAST_REC_2048";
        RMQExperiment<rmq_succinct_rec<2048>> rmq(algo,&A,qv);
