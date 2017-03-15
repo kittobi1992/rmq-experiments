@@ -13,7 +13,8 @@ theme_complete_bw <- function(base_size = 12, base_family = "") {
     rect =               element_rect(fill = "white", colour = "black", size = 0.5, linetype = 1),
     text =               element_text(family = base_family, face = "plain",
                             colour = "black", size = base_size,
-                            hjust = 0.5, vjust = 0.5, angle = 0, lineheight = 0.9),
+                            hjust = 0.5, vjust = 0.5, angle = 0, lineheight = 0.9,
+                            margin = margin(), debug = FALSE),
     axis.text =          element_text(size = rel(0.8), colour = "grey50"),
     strip.text =         element_text(size = base_size * 0.7),
     axis.line =          element_blank(),
@@ -178,10 +179,10 @@ internal_timings_plot <- function(timings, title="") {
 }
 
 #==========Experiment===========#
-experiment_dir="/home/theuer/Dokumente/rmq-experiments/results/"
-date="2017-01-05"
-seq_type="random"
-max_length="10"
+experiment_dir="C:/Users/tobia/Documents/home/theuer/rmq-experiments/results/"
+date="2017-03-13"
+seq_type="decreasing"
+max_length="8"
 delta="0"
 tmp <- cbind(date,"rmq_experiment",seq_type,max_length,delta)
 experiment <- str_c(tmp,collapse='_');
@@ -195,9 +196,9 @@ query$N <- as.numeric(as.character(query$N))
 min_n = log10(min(query$N))
 max_n = log10(max(query$N))
 
-for (n in  (9:9)) {
+for (n in  (6:8)) {
   query_sub <- subset(query,query$N == 10^n)
-  t <- 7.5
+  t <- 5
   query_range_time_plot_for_sdsl_implementation(query_sub,thres=t)
 }
 
