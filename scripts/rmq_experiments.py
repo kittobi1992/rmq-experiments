@@ -62,11 +62,7 @@ def get_query_stats(out):
     res += [int(out.split('N=')[1].split()[0])]
     res += [float(out.split('Range=')[1].split()[0])]
     res += [float(out.split('Time=')[1].split()[0])]
-    scan = str(out.split('Scan=')[1].split()[0])
-    if scan == 'true':
-        res += [1]
-    else:
-        res += [0]
+    res += [int(out.split('Misses=')[1].split()[0])]
     return res
 
 def get_construction_stats(out):
@@ -159,7 +155,7 @@ def experiment(P,dirname):
         print '\n'
 
     #Construct CSV-Table with Query and Construction results
-    cols_query = ['Algo','N','Range','Time','Scan']
+    cols_query = ['Algo','N','Range','Time','Misses']
     df_query = pd.DataFrame(query_res,columns=cols_query)
     cols_construct = ['Algo','N','ConstructTime','BPE']
     df_construct = pd.DataFrame(construct_res,columns=cols_construct)

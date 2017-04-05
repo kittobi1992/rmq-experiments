@@ -7,6 +7,10 @@
 #include <iostream>
 #include <chrono>
 #include <climits>
+#include <linux/perf_event.h>
+#include <linux/hw_breakpoint.h>
+#include <sys/ioctl.h>
+#include <asm/unistd.h>
 
 #include "../rmq/includes/RMQRMM64.h"
 #include "../succinct/cartesian_tree.hpp"
@@ -18,7 +22,7 @@
 
 using namespace std;
 using namespace sdsl;
-
+ 
 using ll = long long;
 using query = std::pair<ll,ll>;
 using HighResClockTimepoint = std::chrono::time_point<std::chrono::high_resolution_clock>;
@@ -26,7 +30,18 @@ using HighResClockTimepoint = std::chrono::time_point<std::chrono::high_resoluti
 int rmq_type;
 HighResClockTimepoint s, e;
 
-bool execute_query = true;
+bool count_cache_misses = true;
+
+static long perf_event_open(struct perf_event_attr *hw_event,
+                            pid_t pid,
+                            int cpu,
+                            int group_fd,
+                            unsigned long flags) {
+    int ret = syscall(__NR_perf_event_open, hw_event, pid, cpu,
+                      group_fd, flags);
+    return ret;
+}
+
 
 struct query_stats {
     size_t N;
@@ -34,22 +49,22 @@ struct query_stats {
     double bits_per_element;
     std::vector<query> q;
     std::vector<double> q_time;
-    std::vector<bool> use_scan;
+    std::vector<long long> cache;
     string algo;
     
     query_stats(string& algo) : algo(algo) { }
     
-    void addQueryResult(query& qu, double time, bool scan) {
+    void addQueryResult(query& qu, double time, long long cache_misses) {
         q.push_back(qu);
         q_time.push_back(time);
-        use_scan.push_back(scan);
+        cache.push_back(cache_misses);
     }
     
     
     void printQueryStats() {
         for(size_t i = 0; i < q.size(); ++i) {
             ll range = q[i].second - q[i].first + 1;
-            printf("QUERY_RESULT Algo=%s N=%zu Range=%lld Time=%f Scan=%s\n", algo.c_str(), N, range, q_time[i], use_scan[i] ? "true" : "false");
+            printf("QUERY_RESULT Algo=%s N=%zu Range=%lld Time=%f Misses=%lld\n", algo.c_str(), N, range, q_time[i], cache[i]);
         }
     }
     
@@ -95,8 +110,8 @@ template<class RMQ>
 class RMQExperiment {
     
 public:
-    RMQExperiment(string& algo, int_vector<> *seq , vector<vector<query>>& qry) 
-                  : algo(algo), q_stats(qry.size(), query_stats(algo)), c_stats(algo) { 
+    RMQExperiment(string& algo, int_vector<> *seq , vector<vector<query>>& qry, struct perf_event_attr& pe) 
+                 : algo(algo), q_stats(qry.size(), query_stats(algo)), c_stats(algo), perf_event(pe) { 
         s = time();
         RMQ rmq(seq);
         e = time();
@@ -114,14 +129,29 @@ public:
             q_stats[i].N = seq->size();
             for(int j = 0; j < qry[i].size(); ++j) {
                 ll i1 = qry[i][j].first, i2 = qry[i][j].second;
-                auto res = 0;
-                if(execute_query) {
-                  s = time();
-                  res = rmq(i1,i2);
-                  e = time();
+                
+                long long cache_misses = 0, fd = 0;
+                if(count_cache_misses) {
+                    fd = perf_event_open(&perf_event,0,-1,-1,0);
+                    if (fd == -1) {
+                        fprintf(stderr, "Error opening leader %llx\n", pe.config);
+                        exit(EXIT_FAILURE);
+                    }
+                    ioctl(fd, PERF_EVENT_IOC_RESET, 0);
+                    ioctl(fd, PERF_EVENT_IOC_ENABLE, 0);
                 }
+                
+                s = time();
+                auto res = rmq(i1,i2);
+                e = time();
+                
+                if(count_cache_misses) {
+                    ioctl(fd, PERF_EVENT_IOC_DISABLE, 0);
+                    read(fd, &cache_misses, sizeof(long long));
+                }
+                
                 out << res << "\n";
-                q_stats[i].addQueryResult(qry[i][j],microseconds(),rand()%2);
+                q_stats[i].addQueryResult(qry[i][j],microseconds(),cache_misses);
             }
             q_stats[i].printQueryStats();
         }
@@ -132,6 +162,7 @@ private:
     string& algo;
     vector<query_stats> q_stats;
     construction_stats c_stats;
+    struct perf_event_attr& perf_event;
 };
 
 
@@ -153,12 +184,9 @@ void executeRMQFerrada(long int *A, size_t N, vector<vector<query>>& qry) {
         for(int j = 0; j < qry[i].size(); ++j) {
             ll i1 = qry[i][j].first, i2 = qry[i][j].second;
             if(i1 > ULONG_MAX || i2 > ULONG_MAX) continue;
-            auto res = 0;
-            if(execute_query) {
-                s = time();
-                res = rmq.queryRMQ(i1,i2);
-                e = time();
-            }
+            s = time();
+            auto res = rmq.queryRMQ(i1,i2);
+            e = time();
             q_stats[i].addQueryResult(qry[i][j],microseconds(),rand()%2);
         }
         q_stats[i].printQueryStats();
@@ -185,12 +213,9 @@ void executeRMQSuccinct(std::vector<long long>& A, size_t N, vector<vector<query
         for(int j = 0; j < qry[i].size(); ++j) {
             uint64_t i1 = qry[i][j].first, i2 = qry[i][j].second;
             if(i1 > ULONG_MAX || i2 > ULONG_MAX) continue;
-            auto res = 0;
-            if(execute_query) {
-                s = time();
-                res = rmq.rmq(i1,i2);
-                e = time();
-            }
+            s = time();
+            auto res = rmq.rmq(i1,i2);
+            e = time();
             q_stats[i].addQueryResult(qry[i][j],microseconds(),rand()%2);
         }
         q_stats[i].printQueryStats();
@@ -233,25 +258,34 @@ int main(int argc, char *argv[]) {
     }
     
     if(argc > 3+num_qry) {
-        execute_query = atoi(argv[3+num_qry]);
+        count_cache_misses = atoi(argv[3+num_qry]);
     }
     
+    //Setup Perf struct to count cache misses
+    struct perf_event_attr pe;
+    memset(&pe, 0, sizeof(struct perf_event_attr));
+    pe.type = PERF_TYPE_HW_CACHE;
+    pe.size = sizeof(struct perf_event_attr);
+    pe.config = PERF_COUNT_HW_CACHE_RESULT_MISS;
+    pe.disabled = 1;
+    pe.exclude_kernel = 1;
+    pe.exclude_hv = 1;
    
 
 
     {
        string algo = "RMQ_SDSL_REC_NEW_1024_2";
-       RMQExperiment<rmq_succinct_rec_new<true, 1024,128,0>> rmq(algo,&A,qv);
+       RMQExperiment<rmq_succinct_rec_new<true, 1024,128,0>> rmq(algo,&A,qv,pe);
     }
 
 
     
-    /*{
+    {
       string algo = "RMQ_SDSL_SCT";
-      RMQExperiment<rmq_succinct_sct<>> rmq(algo,&A,qv);
+      RMQExperiment<rmq_succinct_sct<>> rmq(algo,&A,qv,pe);
     }
     
-    long int *B = new long int[N];
+    /*long int *B = new long int[N];
     for(size_t i = 0; i < N; ++i) {
         B[i] = A[i];
         if(B[i] != A[i]) return -1;
