@@ -26,8 +26,6 @@ using HighResClockTimepoint = std::chrono::time_point<std::chrono::high_resoluti
 int rmq_type;
 HighResClockTimepoint s, e;
 
-bool execute_query = true;
-
 struct query_stats {
     size_t N;
     double construction_time;
@@ -114,12 +112,9 @@ public:
             q_stats[i].N = seq->size();
             for(int j = 0; j < qry[i].size(); ++j) {
                 ll i1 = qry[i][j].first, i2 = qry[i][j].second;
+                s = time();
                 auto res = 0;
-                if(execute_query) {
-                  s = time();
-                  res = rmq(i1,i2);
-                  e = time();
-                }
+                e = time();
                 out << res << "\n";
                 q_stats[i].addQueryResult(qry[i][j],microseconds(),rand()%2);
             }
@@ -153,12 +148,9 @@ void executeRMQFerrada(long int *A, size_t N, vector<vector<query>>& qry) {
         for(int j = 0; j < qry[i].size(); ++j) {
             ll i1 = qry[i][j].first, i2 = qry[i][j].second;
             if(i1 > ULONG_MAX || i2 > ULONG_MAX) continue;
+            s = time();
             auto res = 0;
-            if(execute_query) {
-                s = time();
-                res = rmq.queryRMQ(i1,i2);
-                e = time();
-            }
+            e = time();
             q_stats[i].addQueryResult(qry[i][j],microseconds(),rand()%2);
         }
         q_stats[i].printQueryStats();
@@ -185,14 +177,11 @@ void executeRMQSuccinct(std::vector<long long>& A, size_t N, vector<vector<query
         for(int j = 0; j < qry[i].size(); ++j) {
             uint64_t i1 = qry[i][j].first, i2 = qry[i][j].second;
             if(i1 > ULONG_MAX || i2 > ULONG_MAX) continue;
+            s = time();
             auto res = 0;
-            if(execute_query) {
-                s = time();
-                res = rmq.rmq(i1,i2);
-                e = time();
-            }
+            e = time();
             q_stats[i].addQueryResult(qry[i][j],microseconds(),rand()%2);
-        }
+        } 
         q_stats[i].printQueryStats();
     }
     
@@ -231,11 +220,6 @@ int main(int argc, char *argv[]) {
         }
         qis.close();
     }
-    
-    if(argc > 3+num_qry) {
-        execute_query = atoi(argv[3+num_qry]);
-    }
-    
    
 
 
