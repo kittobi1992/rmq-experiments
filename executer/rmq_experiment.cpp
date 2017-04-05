@@ -11,10 +11,12 @@
 #include <linux/hw_breakpoint.h>
 #include <sys/ioctl.h>
 #include <asm/unistd.h>
+#include <signal.h>
 
 #include "../rmq/includes/RMQRMM64.h"
 #include "../succinct/cartesian_tree.hpp"
 #include "../succinct/mapper.hpp"
+#include "hardware_event.h"
 
 #define MILLI 1000
 #define MICRO 1000000
@@ -30,17 +32,8 @@ using HighResClockTimepoint = std::chrono::time_point<std::chrono::high_resoluti
 int rmq_type;
 HighResClockTimepoint s, e;
 
-bool count_cache_misses = true;
+bool count_cache_misses = false;
 
-static long perf_event_open(struct perf_event_attr *hw_event,
-                            pid_t pid,
-                            int cpu,
-                            int group_fd,
-                            unsigned long flags) {
-    int ret = syscall(__NR_perf_event_open, hw_event, pid, cpu,
-                      group_fd, flags);
-    return ret;
-}
 
 
 struct query_stats {
@@ -91,7 +84,7 @@ struct construction_stats {
     
 };
 
-
+ 
 inline HighResClockTimepoint time() {
     return std::chrono::high_resolution_clock::now();
 }
@@ -110,8 +103,8 @@ template<class RMQ>
 class RMQExperiment {
     
 public:
-    RMQExperiment(string& algo, int_vector<> *seq , vector<vector<query>>& qry, struct perf_event_attr& pe) 
-                 : algo(algo), q_stats(qry.size(), query_stats(algo)), c_stats(algo), perf_event(pe) { 
+    RMQExperiment(string& algo, int_vector<> *seq , vector<vector<query>>& qry) 
+                 : algo(algo), q_stats(qry.size(), query_stats(algo)), c_stats(algo) { 
         s = time();
         RMQ rmq(seq);
         e = time();
@@ -129,29 +122,13 @@ public:
             q_stats[i].N = seq->size();
             for(int j = 0; j < qry[i].size(); ++j) {
                 ll i1 = qry[i][j].first, i2 = qry[i][j].second;
-                
-                long long cache_misses = 0, fd = 0;
-                if(count_cache_misses) {
-                    fd = perf_event_open(&perf_event,0,-1,-1,0);
-                    if (fd == -1) {
-                        fprintf(stderr, "Error opening leader %llx\n", pe.config);
-                        exit(EXIT_FAILURE);
-                    }
-                    ioctl(fd, PERF_EVENT_IOC_RESET, 0);
-                    ioctl(fd, PERF_EVENT_IOC_ENABLE, 0);
-                }
-                
+               
                 s = time();
                 auto res = rmq(i1,i2);
                 e = time();
                 
-                if(count_cache_misses) {
-                    ioctl(fd, PERF_EVENT_IOC_DISABLE, 0);
-                    read(fd, &cache_misses, sizeof(long long));
-                }
-                
                 out << res << "\n";
-                q_stats[i].addQueryResult(qry[i][j],microseconds(),cache_misses);
+                q_stats[i].addQueryResult(qry[i][j],microseconds(),0);
             }
             q_stats[i].printQueryStats();
         }
@@ -162,7 +139,6 @@ private:
     string& algo;
     vector<query_stats> q_stats;
     construction_stats c_stats;
-    struct perf_event_attr& perf_event;
 };
 
 
@@ -261,29 +237,23 @@ int main(int argc, char *argv[]) {
         count_cache_misses = atoi(argv[3+num_qry]);
     }
     
-    //Setup Perf struct to count cache misses
-    struct perf_event_attr pe;
-    memset(&pe, 0, sizeof(struct perf_event_attr));
-    pe.type = PERF_TYPE_HW_CACHE;
-    pe.size = sizeof(struct perf_event_attr);
-    pe.config = PERF_COUNT_HW_CACHE_RESULT_MISS;
-    pe.disabled = 1;
-    pe.exclude_kernel = 1;
-    pe.exclude_hv = 1;
-   
-
-
+    
+    HardwareEvent hw_event;
+    std::cout <<  hw_event.start(PERF_COUNT_HW_CACHE_REFERENCES) << std::endl;
+    
     {
        string algo = "RMQ_SDSL_REC_NEW_1024_2";
-       RMQExperiment<rmq_succinct_rec_new<true, 1024,128,0>> rmq(algo,&A,qv,pe);
+       RMQExperiment<rmq_succinct_rec_new<true, 1024,128,0>> rmq(algo,&A,qv);
     }
 
 
     
     {
       string algo = "RMQ_SDSL_SCT";
-      RMQExperiment<rmq_succinct_sct<>> rmq(algo,&A,qv,pe);
+      RMQExperiment<rmq_succinct_sct<>> rmq(algo,&A,qv);
     }
+    
+    hw_event.stop();
     
     /*long int *B = new long int[N];
     for(size_t i = 0; i < N; ++i) {
