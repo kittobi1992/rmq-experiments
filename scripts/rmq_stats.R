@@ -94,6 +94,24 @@ query_range_time_plot <- function(d, title="", thres=4.0, aes_plot = aes(factor(
   print(plot)
 }
 
+query_range_cache_misses_plot <- function(d, title="", thres=4.0, aes_plot = aes(factor(Range),Misses)) {
+  d$Time <- as.numeric(as.character(d$Time))
+  d$Misses <- as.numeric(as.character(d$Misses))
+  d <- subset(d,d$Misses <= thres)
+  d <- subset(d,d$Algo != "RMQ_SDSL_BP")
+  d <- subset(d,d$Algo != "RMQ_SDSL_BP_FAST_REC_OLD_1024")
+  d <- subset(d,d$Algo != "RMQ_SDSL_BP_FAST_REC_1024")
+  d$Algo  <- revalue(d$Algo, c("RMQ_FERRADA"="BP-Ferrada","RMQ_SDSL_SCT"="SDSL-OLD","RMQ_SUCCINCT"="SUCCINCT","RMQ_SDSL_BP_FAST_REC_1024"="SDSL-BP-REC"))
+  
+  
+  plot <- ggplot(d,aes_plot) + ggtitle(title)
+  plot <- plot + geom_boxplot(aes(fill = factor(Algo)), outlier.size = 1)
+  plot <- plot + ylab("Cache Misses")
+  plot <- plot + xlab("N")
+  plot <- plot + theme_complete_bw()
+  print(plot)
+}
+
 #Plot for experiments with fixed query range and varying input sizes
 #DataFrame d must only contain the results for a fixed query range
 input_size_time_plot <- function(d, title="", thres=4.0, aes_plot = aes(factor(N),Time)) {
@@ -179,8 +197,8 @@ internal_timings_plot <- function(timings, title="") {
 }
 
 #==========Experiment===========#
-experiment_dir="C:/Users/tobia/Documents/home/theuer/rmq-experiments/results/"
-date="2017-03-15"
+experiment_dir="/home/theuer/Dokumente/rmq-experiments/results/"
+date="2017-04-06"
 seq_type="random"
 max_length="8"
 delta="0"
@@ -198,9 +216,19 @@ max_n = log10(max(query$N))
 
 for (n in  (6:8)) {
   query_sub <- subset(query,query$N == 10^n)
-  t <- 5
-  query_range_time_plot_for_sdsl_implementation(query_sub,thres=t)
+  t <- 7.5
+  query_range_time_plot(query_sub,thres=t)
 }
+
+query_sub <- subset(query,query$N == 10^8)
+cache_misses <- data.frame ( table ( Algo = query_sub$Algo, Misses = query_sub$Misses ) )
+cache_misses <-dcast(cache_misses, formula = Algo ~ Misses)
+row_sums <- rowSums(cache_misses[,2:length(colnames(cache_misses))])
+for (n in (length(colnames(cache_misses)):3)) {
+  colnames(cache_misses)[n] <- paste("<=", colnames(cache_misses)[n])
+  cache_misses[colnames(cache_misses)[n]] = paste(as.character(round((rowSums(cache_misses[,2:n])/row_sums)*100,2)),"%",sep="");
+}
+print(cache_misses[,1:20])
 
 #range_sub <- subset(query,query$Range == 10000 & query$N < 10^10)
 #input_size_time_plot(range_sub,thres=7.5)

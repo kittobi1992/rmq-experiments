@@ -17,10 +17,8 @@ class HardwareEvent
         
         HardwareEvent(): m_count{0}
         {
-            std::cout << "Constructor" << std::endl;
             std::memset(&m_hardwareEvent, 0, sizeof(struct perf_event_attr));
             m_hardwareEvent.type = PERF_TYPE_HARDWARE;
-            m_hardwareEvent.size = sizeof(struct perf_event_attr);
             m_hardwareEvent.disabled = 1;
             m_hardwareEvent.exclude_kernel = 1;
             m_hardwareEvent.exclude_hv = 1;
@@ -40,8 +38,9 @@ class HardwareEvent
             }
 
             m_hardwareEvent.config = event;
+            m_descriptor = perf_event_open(0, -1, -1, 0);
             
-            if ( m_descriptor = perf_event_open(0, -1, -1, 0) != 0 )
+            if (m_descriptor == -1 )
             {
                 return false;
             }
@@ -55,6 +54,7 @@ class HardwareEvent
         {
             ioctl(m_descriptor, PERF_EVENT_IOC_DISABLE, 0);
             read(m_descriptor, &m_count, sizeof(long long));
+            close(m_descriptor);
         }
         
         long long getCount() const { return m_count; }
@@ -66,8 +66,8 @@ class HardwareEvent
 
         long perf_event_open(pid_t pid, int cpu, int group_fd, unsigned long flags)
         {
-            int ret;
-            ret = syscall(__NR_perf_event_open, &m_hardwareEvent, pid, cpu, group_fd, flags);
+            //m_hardwareEvent.size = sizeof(struct perf_event_attr);
+            int ret = syscall(__NR_perf_event_open, &m_hardwareEvent, pid, cpu, group_fd, flags);
             return ret;
         }
         

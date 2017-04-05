@@ -14,6 +14,7 @@ reference="RMQ_SDSL_SCT"
 length=8
 seq_type="random"
 delta = 0
+count_cache_misses=0
 
 
 def exe(cmd):
@@ -53,6 +54,7 @@ def grep(s,pattern):
 def execute_rmq_benchmark(sequence, query):
     cmd = ['./executer/rmq_experiment.o',sequence,str(len(query))]
     cmd.extend(query)
+    cmd += [str(count_cache_misses)]
     res = exe(cmd)
     return [grep(res,'QUERY_RESULT').split('\n'),grep(res,'CONSTRUCTION_RESULT').split('\n')]
 
@@ -178,6 +180,7 @@ if __name__ == '__main__':
     parser.add_argument("--length",type=int);
     parser.add_argument("--seq_type", type=str)
     parser.add_argument("--delta", type=int)
+    parser.add_argument("--count_cache_misses", type=bool)
     args = parser.parse_args()
     
     if args.length != None:
@@ -186,11 +189,14 @@ if __name__ == '__main__':
         seq_type = args.seq_type
     if args.delta != None:
         delta = args.delta
+    if args.count_cache_misses != None:
+        count_cache_misses = args.count_cache_misses
         
     print 'Configuration\n============='
     print 'Maximum Sequence Length = ' + str(pow(10,length))
     print 'Sequence Type           = ' + seq_type
     print 'Sequence Delta          = ' + str(delta)
+    print 'Count Cache Misses      = ' + str(count_cache_misses)
     print '\n'
     
     dirname = setup_experiment_environment()

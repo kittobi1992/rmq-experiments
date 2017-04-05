@@ -7,11 +7,6 @@
 #include <iostream>
 #include <chrono>
 #include <climits>
-#include <linux/perf_event.h>
-#include <linux/hw_breakpoint.h>
-#include <sys/ioctl.h>
-#include <asm/unistd.h>
-#include <signal.h>
 
 #include "../rmq/includes/RMQRMM64.h"
 #include "../succinct/cartesian_tree.hpp"
@@ -33,7 +28,7 @@ int rmq_type;
 HighResClockTimepoint s, e;
 
 bool count_cache_misses = false;
-
+HardwareEvent hw_event;
 
 
 struct query_stats {
@@ -75,7 +70,7 @@ struct construction_stats {
     void addConstructionResult(size_t n, double c_time, double bpe) {
         N = n;
         construction_time = c_time;
-        bits_per_element = bpe;
+        bits_per_element = bpe; 
     }
     
     void printConstructionStats() {
@@ -122,15 +117,29 @@ public:
             q_stats[i].N = seq->size();
             for(int j = 0; j < qry[i].size(); ++j) {
                 ll i1 = qry[i][j].first, i2 = qry[i][j].second;
-               
+                
+                if(count_cache_misses) {
+                    bool success = hw_event.start(PERF_COUNT_HW_CACHE_MISSES); 
+                    if(!success) {
+                        perror("perf_event_open");
+                        exit(-1);   
+                    }
+                }
+            
                 s = time();
                 auto res = rmq(i1,i2);
                 e = time();
                 
+                long long cache_misses = 0;
+                if(count_cache_misses) {
+                    hw_event.stop();
+                    cache_misses = hw_event.getCount();
+                }
+                
                 out << res << "\n";
-                q_stats[i].addQueryResult(qry[i][j],microseconds(),0);
+                q_stats[i].addQueryResult(qry[i][j],microseconds(),cache_misses);
             }
-            q_stats[i].printQueryStats();
+            q_stats[i].printQueryStats(); 
         }
         
     }
@@ -160,10 +169,26 @@ void executeRMQFerrada(long int *A, size_t N, vector<vector<query>>& qry) {
         for(int j = 0; j < qry[i].size(); ++j) {
             ll i1 = qry[i][j].first, i2 = qry[i][j].second;
             if(i1 > ULONG_MAX || i2 > ULONG_MAX) continue;
+           
+            if(count_cache_misses) {
+                bool success = hw_event.start(PERF_COUNT_HW_CACHE_MISSES); 
+                if(!success) {
+                    perror("perf_event_open");
+                    exit(-1);   
+                }
+            }
+            
             s = time();
             auto res = rmq.queryRMQ(i1,i2);
             e = time();
-            q_stats[i].addQueryResult(qry[i][j],microseconds(),rand()%2);
+            
+            long long cache_misses = 0;
+            if(count_cache_misses) {
+                hw_event.stop();
+                cache_misses = hw_event.getCount();
+            }
+            
+            q_stats[i].addQueryResult(qry[i][j],microseconds(),cache_misses);
         }
         q_stats[i].printQueryStats();
     }
@@ -189,10 +214,26 @@ void executeRMQSuccinct(std::vector<long long>& A, size_t N, vector<vector<query
         for(int j = 0; j < qry[i].size(); ++j) {
             uint64_t i1 = qry[i][j].first, i2 = qry[i][j].second;
             if(i1 > ULONG_MAX || i2 > ULONG_MAX) continue;
+            
+            if(count_cache_misses) {
+                bool success = hw_event.start(PERF_COUNT_HW_CACHE_MISSES); 
+                if(!success) {
+                    perror("perf_event_open");
+                    exit(-1);   
+                }
+            }
+            
             s = time();
             auto res = rmq.rmq(i1,i2);
             e = time();
-            q_stats[i].addQueryResult(qry[i][j],microseconds(),rand()%2);
+            
+            long long cache_misses = 0;
+            if(count_cache_misses) {
+                hw_event.stop();
+                cache_misses = hw_event.getCount();
+            }
+            
+            q_stats[i].addQueryResult(qry[i][j],microseconds(),cache_misses);
         }
         q_stats[i].printQueryStats();
     }
@@ -218,7 +259,7 @@ int main(int argc, char *argv[]) {
     }
     is.close();
     
-    
+     
     printf("Read Query Files...\n");
     int num_qry = atoi(argv[2]);
     vector<vector<query>> qv(num_qry);
@@ -230,40 +271,36 @@ int main(int argc, char *argv[]) {
             query qu = make_pair(0,0); qis >> qu.first >> qu.second;
             qv[i].push_back(qu);
         }
-        qis.close();
+        qis.close(); 
     }
     
     if(argc > 3+num_qry) {
         count_cache_misses = atoi(argv[3+num_qry]);
     }
-    
-    
-    HardwareEvent hw_event;
-    std::cout <<  hw_event.start(PERF_COUNT_HW_CACHE_REFERENCES) << std::endl;
-    
+   
+   
     {
-       string algo = "RMQ_SDSL_REC_NEW_1024_2";
+       string algo = "RMQ_SDSL_REC_NEW_1024_2"; 
        RMQExperiment<rmq_succinct_rec_new<true, 1024,128,0>> rmq(algo,&A,qv);
     }
 
-
-    
     {
       string algo = "RMQ_SDSL_SCT";
       RMQExperiment<rmq_succinct_sct<>> rmq(algo,&A,qv);
-    }
+    } 
+   
     
-    hw_event.stop();
+
     
-    /*long int *B = new long int[N];
+    long int *B = new long int[N];
     for(size_t i = 0; i < N; ++i) {
         B[i] = A[i];
         if(B[i] != A[i]) return -1;
-    }*/
+    }
     memory_manager::clear(A);
     
   
-    /*{
+    {
         executeRMQFerrada(B,N,qv);
     } 
     
@@ -281,7 +318,7 @@ int main(int argc, char *argv[]) {
     }
     else {
         delete [] B;
-    }*/
+    }
     
     
 }
