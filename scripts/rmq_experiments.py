@@ -69,7 +69,7 @@ def get_query_stats(out):
     res += [int(out.split('N=')[1].split()[0])]
     res += [float(out.split('Range=')[1].split()[0])]
     res += [float(out.split('Time=')[1].split()[0])]
-    res += [int(out.split('Misses=')[1].split()[0])]
+    res += [float(out.split('Misses=')[1].split()[0])]
     return res
 
 def get_construction_stats(out):

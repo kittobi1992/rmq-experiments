@@ -38,12 +38,12 @@ struct query_stats {
     double bits_per_element;
     std::vector<query> q;
     std::vector<double> q_time;
-    std::vector<long long> cache;
+    std::vector<double> cache;
     string algo;
     
     query_stats(string& algo) : algo(algo) { }
     
-    void addQueryResult(query& qu, double time, long long cache_misses) {
+    void addQueryResult(query& qu, double time, double cache_misses) {
         q.push_back(qu);
         q_time.push_back(time);
         cache.push_back(cache_misses);
@@ -131,14 +131,14 @@ public:
                 auto res = rmq(i1,i2);
                 e = time();
                 
-                long long cache_misses = 0;
+                double miss_ratio = 0;
                 if(count_cache_misses) {
                     hw_event.stop();
-                    cache_misses = hw_event.getCount();
+                    miss_ratio = hw_event.getCacheMissRatio();
                 }
                 
                 out << res << "\n";
-                q_stats[i].addQueryResult(qry[i][j],microseconds(),cache_misses);
+                q_stats[i].addQueryResult(qry[i][j],microseconds(),miss_ratio);
             }
             q_stats[i].printQueryStats(); 
         }
@@ -183,13 +183,13 @@ void executeRMQFerrada(long int *A, size_t N, vector<vector<query>>& qry) {
             auto res = rmq.queryRMQ(i1,i2);
             e = time();
             
-            long long cache_misses = 0;
+            double miss_ratio = 0;
             if(count_cache_misses) {
                 hw_event.stop();
-                cache_misses = hw_event.getCount();
+                miss_ratio = hw_event.getCacheMissRatio();
             }
             
-            q_stats[i].addQueryResult(qry[i][j],microseconds(),cache_misses);
+            q_stats[i].addQueryResult(qry[i][j],microseconds(),miss_ratio);
         }
         q_stats[i].printQueryStats();
     }
@@ -227,14 +227,14 @@ void executeRMQSuccinct(std::vector<long long>& A, size_t N, vector<vector<query
             s = time();
             auto res = rmq.rmq(i1,i2);
             e = time();
-            
-            long long cache_misses = 0;
+
+            double miss_ratio = 0;
             if(count_cache_misses) {
                 hw_event.stop();
-                cache_misses = hw_event.getCount();
+                miss_ratio = hw_event.getCacheMissRatio();
             }
             
-            q_stats[i].addQueryResult(qry[i][j],microseconds(),cache_misses);
+            q_stats[i].addQueryResult(qry[i][j],microseconds(),miss_ratio);
         }
         q_stats[i].printQueryStats();
     }
