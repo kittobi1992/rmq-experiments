@@ -7,7 +7,7 @@
 #include <iostream>
 #include <chrono>
 #include <climits>
-
+ 
 #include "../rmq/includes/RMQRMM64.h"
 #include "../succinct/cartesian_tree.hpp"
 #include "../succinct/mapper.hpp"
@@ -53,7 +53,7 @@ struct query_stats {
     void printQueryStats() {
         for(size_t i = 0; i < q.size(); ++i) {
             ll range = q[i].second - q[i].first + 1;
-            printf("QUERY_RESULT Algo=%s N=%zu Range=%lld Time=%f Misses=%lld\n", algo.c_str(), N, range, q_time[i], cache[i]);
+            printf("QUERY_RESULT Algo=%s N=%zu Range=%lld Time=%f Misses=%f\n", algo.c_str(), N, range, q_time[i], cache[i]);
         }
     }
     
@@ -189,7 +189,7 @@ void executeRMQFerrada(long int *A, size_t N, vector<vector<query>>& qry) {
                 miss_ratio = hw_event.getCacheMissRatio();
             }
             
-            q_stats[i].addQueryResult(qry[i][j],microseconds(),miss_ratio);
+	    q_stats[i].addQueryResult(qry[i][j],microseconds(),miss_ratio);
         }
         q_stats[i].printQueryStats();
     }
@@ -233,7 +233,7 @@ void executeRMQSuccinct(std::vector<long long>& A, size_t N, vector<vector<query
                 hw_event.stop();
                 miss_ratio = hw_event.getCacheMissRatio();
             }
-            
+  
             q_stats[i].addQueryResult(qry[i][j],microseconds(),miss_ratio);
         }
         q_stats[i].printQueryStats();

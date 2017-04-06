@@ -32,7 +32,7 @@ class HardwareEvent
             m_hardwareEvent.config = PERF_COUNT_HW_CACHE_MISSES;
             m_cache_misses = perf_event_open(0, -1, -1, 0);
             m_hardwareEvent.config = PERF_COUNT_HW_CACHE_REFERENCES;
-            m_cache_references = perf_event_open(0, -1, m_cache_misses, 0);
+            m_cache_references = perf_event_open(0, -1, -1, 0);
             
             if (m_cache_misses == -1 || m_cache_references == -1)
             {
@@ -41,13 +41,16 @@ class HardwareEvent
             
             ioctl(m_cache_misses, PERF_EVENT_IOC_RESET, 0);
             ioctl(m_cache_misses, PERF_EVENT_IOC_ENABLE, 0);
+            ioctl(m_cache_references, PERF_EVENT_IOC_RESET, 0);
+            ioctl(m_cache_references, PERF_EVENT_IOC_ENABLE, 0);
             return true;
         }
         
         void stop()
         {
             ioctl(m_cache_misses, PERF_EVENT_IOC_DISABLE, 0);
-            read(m_cache_misses, &m_cache_misses_count, sizeof(long long));
+            ioctl(m_cache_references, PERF_EVENT_IOC_DISABLE, 0);
+	    read(m_cache_misses, &m_cache_misses_count, sizeof(long long));
             read(m_cache_references, &m_cache_references_count, sizeof(long long));
             close(m_cache_misses);
             close(m_cache_references);
@@ -58,6 +61,9 @@ class HardwareEvent
         long long getCacheReferences() const { return m_cache_references_count; }
 
         double getCacheMissRatio() const {
+	    if(m_cache_references_count == 0) {
+	      return 0.0;
+            }
             return static_cast<double>(m_cache_misses_count)/static_cast<double>(m_cache_references_count);
         }
         
