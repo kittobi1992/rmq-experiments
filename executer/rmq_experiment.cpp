@@ -28,6 +28,7 @@ int rmq_type;
 HighResClockTimepoint s, e;
 
 bool count_cache_misses = false;
+bool compare_sdsl = false;
 HardwareEvent hw_event;
 
 
@@ -276,48 +277,110 @@ int main(int argc, char *argv[]) {
     
     if(argc > 3+num_qry) {
         count_cache_misses = atoi(argv[3+num_qry]);
-    }
-   
-   
-    {
-       string algo = "RMQ_SDSL_REC_NEW_1024_2"; 
-       RMQExperiment<rmq_succinct_rec_new<true, 1024,128,0>> rmq(algo,&A,qv);
-    }
-
-    {
-      string algo = "RMQ_SDSL_SCT";
-      RMQExperiment<rmq_succinct_sct<>> rmq(algo,&A,qv);
-    } 
-   
-    
-
-    
-    long int *B = new long int[N];
-    for(size_t i = 0; i < N; ++i) {
-        B[i] = A[i];
-        if(B[i] != A[i]) return -1;
-    }
-    memory_manager::clear(A);
-    
-  
-    {
-        executeRMQFerrada(B,N,qv);
-    } 
-    
-    if(N < std::numeric_limits<int>::max()) {
-        std::vector<long long> C(N);
-        for(size_t i = 0; i < N; ++i) {
-            C[i] = B[i];
-            if(C[i] != B[i]) return -1;
+        if(argc > 3+num_qry + 1) {
+            compare_sdsl = atoi(argv[3+num_qry+1]);
         }
-        delete [] B;
-    
+    }
+   
+    if(compare_sdsl) {
+
         {
-            executeRMQSuccinct(C,N,qv);
+            string algo = "RMQ_SDSL_REC_4096_1"; 
+            RMQExperiment<rmq_succinct_rec_new<true, 4096,0>> rmq(algo,&A,qv);
         }
+        
+        {
+            string algo = "RMQ_SDSL_REC_2048_1"; 
+            RMQExperiment<rmq_succinct_rec_new<true, 2048,0>> rmq(algo,&A,qv);
+        }
+        
+        {
+            string algo = "RMQ_SDSL_REC_1024_1"; 
+            RMQExperiment<rmq_succinct_rec_new<true, 1024,0>> rmq(algo,&A,qv);
+        }
+        
+        {
+            string algo = "RMQ_SDSL_REC_4096_2"; 
+            RMQExperiment<rmq_succinct_rec_new<true, 4096,128,0>> rmq(algo,&A,qv);
+        }
+        
+        {
+            string algo = "RMQ_SDSL_REC_2048_2"; 
+            RMQExperiment<rmq_succinct_rec_new<true, 2048,128,0>> rmq(algo,&A,qv);
+        }
+        
+        {
+            string algo = "RMQ_SDSL_REC_1024_2"; 
+            RMQExperiment<rmq_succinct_rec_new<true, 1024,128,0>> rmq(algo,&A,qv);
+        }
+        
+        {
+            string algo = "RMQ_SDSL_REC_4096_3"; 
+            RMQExperiment<rmq_succinct_rec_new<true, 4096,128,64,0>> rmq(algo,&A,qv);
+        }
+        
+        {
+            string algo = "RMQ_SDSL_REC_2048_3"; 
+            RMQExperiment<rmq_succinct_rec_new<true, 2048,128,64,0>> rmq(algo,&A,qv);
+        }
+        
+        {
+            string algo = "RMQ_SDSL_REC_1024_3"; 
+            RMQExperiment<rmq_succinct_rec_new<true, 1024,128,64,0>> rmq(algo,&A,qv);
+        }
+        
+        {
+            string algo = "RMQ_SDSL_SCT";
+            RMQExperiment<rmq_succinct_sct<>> rmq(algo,&A,qv);
+        } 
+        
     }
     else {
-        delete [] B;
+        
+        {
+            string algo = "RMQ_SDSL_REC_NEW_1024_2"; 
+            RMQExperiment<rmq_succinct_rec_new<true, 1024,128,0>> rmq(algo,&A,qv);
+        }
+        
+        
+        {
+            string algo = "RMQ_SDSL_REC_OLD_1024_2"; 
+            RMQExperiment<rmq_succinct_rec<>> rmq(algo,&A,qv);
+        }
+        
+        {
+            string algo = "RMQ_SDSL_SCT";
+            RMQExperiment<rmq_succinct_sct<>> rmq(algo,&A,qv);
+        } 
+        
+        
+        long int *B = new long int[N];
+        for(size_t i = 0; i < N; ++i) {
+            B[i] = A[i];
+            if(B[i] != A[i]) return -1;
+        }
+        memory_manager::clear(A);
+        
+        
+        {
+            executeRMQFerrada(B,N,qv);
+        } 
+        
+        if(N < std::numeric_limits<int>::max()) {
+            std::vector<long long> C(N);
+            for(size_t i = 0; i < N; ++i) {
+                C[i] = B[i];
+                if(C[i] != B[i]) return -1;
+            }
+            delete [] B;
+            
+            {
+                executeRMQSuccinct(C,N,qv);
+            }
+        }
+        else {
+            delete [] B;
+        }
     }
     
     

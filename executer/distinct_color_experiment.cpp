@@ -264,45 +264,25 @@ int main(int argc, char *argv[]) {
         }
         qis.close();
     }
+
+
     
-    string algo1 = "RMQ_SDSL_SCT";
-    //string algo2 = "RMQ_SDSL_BP";
-    string algo3 = "RMQ_SDSL_BP_FAST_1024";
-    string algo4 = "RMQ_SDSL_BP_FAST_4096";
-    string algo5 = "RMQ_SDSL_BP_FAST_REC_512";
-    string algo6 = "RMQ_SDSL_BP_FAST_REC_1024";
-    string algo7 = "RMQ_SDSL_BP_FAST_REC_OLD_1024";
     {
-        //RMQExperiment<rmq_succinct_sct<>> rmq1(algo1,&A,qv);
+        string algo = "RMQ_SDSL_REC_NEW_1024_2"; 
+        RMQExperiment<rmq_succinct_rec_new<true, 1024,128,0>> rmq(algo,&prev,qv);
+    }
+    
+    
+    {
+        string algo = "RMQ_SDSL_REC_OLD_1024_2"; 
+        RMQExperiment<rmq_succinct_rec<>> rmq(algo,&prev,qv);
     }
     
     {
-        //RMQExperiment<rmq_succinct_bp<>> rmq2(algo2,&A,qv);
-    }
-    
-    /*{
-        RMQExperiment<rmq_succinct_bp_fast<1024>> rmq3(algo3,&A,qv);
-    }
-    
-    {
-        RMQExperiment<rmq_succinct_bp_fast<4096>> rmq4(algo4,&A,qv);
-    }
-    
-    {
-        RMQExperiment<rmq_succinct_rec<512>> rmq5(algo5,&A,qv);
-    }*/
-   
-    {
-        RMQExperiment<rmq_succinct_rec<1024>> rmq6(algo6,&prev,qv);
-    }
-    
-    /*{
-        RMQExperiment<rmq_succinct_rec_old<1024>> rmq6(algo7,&A,qv);
-    }*/
-    
-    {
-        RMQExperiment<rmq_succinct_sct<>> rmq7(algo1,&prev,qv);
-    }
+        string algo = "RMQ_SDSL_SCT";
+        RMQExperiment<rmq_succinct_sct<>> rmq(algo,&prev,qv);
+    } 
+  
     
     long int *B = new long int[N+1];
     for(size_t i = 0; i < N+1; ++i) {

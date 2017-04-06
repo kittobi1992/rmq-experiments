@@ -199,7 +199,7 @@ internal_timings_plot <- function(timings, title="") {
 #==========Experiment===========#
 experiment_dir="/home/theuer/Dokumente/rmq-experiments/results/"
 date="2017-04-06"
-seq_type="random"
+seq_type="increasing"
 max_length="8"
 delta="0"
 tmp <- cbind(date,"rmq_experiment",seq_type,max_length,delta)
@@ -216,7 +216,7 @@ max_n = log10(max(query$N))
 
 for (n in  (6:8)) {
   query_sub <- subset(query,query$N == 10^n)
-  t <- 7.5
+  t <- 5
   query_range_time_plot(query_sub,thres=t)
 }
 

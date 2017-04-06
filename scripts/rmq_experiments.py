@@ -11,10 +11,12 @@ import shutil
 num_query=10000
 reference="RMQ_SDSL_SCT"
 
-length=8
+min_length=6
+max_length=8
 seq_type="random"
 delta = 0
-count_cache_misses=0
+count_cache_misses=False
+compare_sdsl=False
 
 
 def exe(cmd):
@@ -54,7 +56,10 @@ def grep(s,pattern):
 def execute_rmq_benchmark(sequence, query):
     cmd = ['./executer/rmq_experiment.o',sequence,str(len(query))]
     cmd.extend(query)
-    cmd += [str(count_cache_misses)]
+    if(count_cache_misses): cmd += ['1']
+    else: cmd += ['0']
+    if(compare_sdsl): cmd += ['1']
+    else: cmd += ['0']
     res = exe(cmd)
     return [grep(res,'QUERY_RESULT').split('\n'),grep(res,'CONSTRUCTION_RESULT').split('\n')]
 
@@ -112,9 +117,9 @@ def plot_data_frame(df, x, y, t, f, xticks):
     fig = ax.get_figure();
     fig.savefig(f);
 
-def experiment(P,dirname):
+def experiment(dirname):
     N = []
-    for i in range(4,P+1):
+    for i in range(min_length,max_length+1):
         N += [pow(10,i)]
     print 'Experiment\n============'
     res = []
@@ -167,7 +172,11 @@ def experiment(P,dirname):
     delete_folder_content("benchmark/")
 
 def setup_experiment_environment():
-    dirname = "results/"+str(datetime.datetime.now().date())+"_rmq_experiment_"+seq_type+"_"+str(length)+"_"+str(delta)+"/";
+    dirname = "results/"+str(datetime.datetime.now().date())+"_rmq_experiment_";
+    if(compare_sdsl): dirname += "sdsl_";
+    dirname += seq_type+"_"+str(max_length)+"_"+str(delta);
+    if(count_cache_misses): dirname += "_with_cache_misses";
+    dirname += "/";
     try: os.stat(dirname);
     except: os.mkdir(dirname);
     delete_folder_content("benchmark/")
@@ -177,14 +186,20 @@ def setup_experiment_environment():
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--length",type=int);
+    parser.add_argument("--compare_sdsl", type=int);
+    parser.add_argument("--min_length",type=int);
+    parser.add_argument("--max_length",type=int);
     parser.add_argument("--seq_type", type=str)
     parser.add_argument("--delta", type=int)
-    parser.add_argument("--count_cache_misses", type=bool)
+    parser.add_argument("--count_cache_misses", type=int)
     args = parser.parse_args()
     
-    if args.length != None:
-        length = args.length
+    if args.compare_sdsl != None:
+        compare_sdsl = args.compare_sdsl
+    if args.min_length != None:
+        min_length = args.min_length
+    if args.max_length != None:
+        max_length = args.max_length
     if args.seq_type != None:
         seq_type = args.seq_type
     if args.delta != None:
@@ -193,12 +208,14 @@ if __name__ == '__main__':
         count_cache_misses = args.count_cache_misses
         
     print 'Configuration\n============='
-    print 'Maximum Sequence Length = ' + str(pow(10,length))
+    print 'Compare SDSL Variants   = ' + str(compare_sdsl)    
+    print 'Minimum Sequence Length = ' + str(pow(10,min_length))
+    print 'Maximum Sequence Length = ' + str(pow(10,max_length))
     print 'Sequence Type           = ' + seq_type
     print 'Sequence Delta          = ' + str(delta)
     print 'Count Cache Misses      = ' + str(count_cache_misses)
     print '\n'
     
     dirname = setup_experiment_environment()
-    experiment(length,dirname)
+    experiment(dirname)
     
