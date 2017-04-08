@@ -106,7 +106,7 @@ query_range_cache_misses_plot <- function(d, title="", thres=4.0, aes_plot = aes
   
   plot <- ggplot(d,aes_plot) + ggtitle(title)
   plot <- plot + geom_boxplot(aes(fill = factor(Algo)), outlier.size = 1)
-  plot <- plot + ylab("Cache Misses")
+  plot <- plot + ylab("Cache Miss Ratio")
   plot <- plot + xlab("N")
   plot <- plot + theme_complete_bw()
   print(plot)
@@ -197,10 +197,10 @@ internal_timings_plot <- function(timings, title="") {
 }
 
 #==========Experiment===========#
-experiment_dir="/home/theuer/Dokumente/rmq-experiments/results/"
-date="2017-04-06"
-seq_type="increasing"
-max_length="8"
+experiment_dir="C:/Users/tobia/Documents/home/theuer/rmq-experiments/results/"
+date="2017-04-07"
+seq_type="random"
+max_length="10"
 delta="0"
 tmp <- cbind(date,"rmq_experiment",seq_type,max_length,delta)
 experiment <- str_c(tmp,collapse='_');
@@ -214,9 +214,9 @@ query$N <- as.numeric(as.character(query$N))
 min_n = log10(min(query$N))
 max_n = log10(max(query$N))
 
-for (n in  (6:8)) {
+for (n in  (10:10)) {
   query_sub <- subset(query,query$N == 10^n)
-  t <- 5
+  t <- 7.5
   query_range_time_plot(query_sub,thres=t)
 }
 

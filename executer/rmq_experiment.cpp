@@ -38,22 +38,27 @@ struct query_stats {
     double bits_per_element;
     std::vector<query> q;
     std::vector<double> q_time;
-    std::vector<double> cache;
+    std::vector<double> miss_ratio;
+    std::vector<ll> cache_miss;
+    std::vector<ll> cache_references;
     string algo;
     
     query_stats(string& algo) : algo(algo) { }
     
-    void addQueryResult(query& qu, double time, double cache_misses) {
+    void addQueryResult(query& qu, double time, double cache_miss_ratio, ll cache_misses, ll cache_ref) {
         q.push_back(qu);
         q_time.push_back(time);
-        cache.push_back(cache_misses);
+        miss_ratio.push_back(cache_miss_ratio);
+        cache_miss.push_back(cache_misses);
+        cache_references.push_back(cache_ref);
     }
     
     
     void printQueryStats() {
         for(size_t i = 0; i < q.size(); ++i) {
             ll range = q[i].second - q[i].first + 1;
-            printf("QUERY_RESULT Algo=%s N=%zu Range=%lld Time=%f Misses=%f\n", algo.c_str(), N, range, q_time[i], cache[i]);
+            printf("QUERY_RESULT Algo=%s N=%zu Range=%lld Time=%f MissRatio=%f CacheMisses=%lld CacheReferences=%lld\n", 
+                    algo.c_str(), N, range, q_time[i], miss_ratio[i], cache_miss[i], cache_references[i]);
         }
     }
     
@@ -138,7 +143,7 @@ public:
                 }
                 
                 out << res << "\n";
-                q_stats[i].addQueryResult(qry[i][j],microseconds(),miss_ratio);
+                q_stats[i].addQueryResult(qry[i][j],microseconds(),miss_ratio,hw_event.getCacheMisses(),hw_event.getCacheReferences());
             }
             q_stats[i].printQueryStats(); 
         }
@@ -189,7 +194,7 @@ void executeRMQFerrada(long int *A, size_t N, vector<vector<query>>& qry) {
                 miss_ratio = hw_event.getCacheMissRatio();
             }
             
-	    q_stats[i].addQueryResult(qry[i][j],microseconds(),miss_ratio);
+	    q_stats[i].addQueryResult(qry[i][j],microseconds(),miss_ratio,hw_event.getCacheMisses(),hw_event.getCacheReferences());
         }
         q_stats[i].printQueryStats();
     }
@@ -234,7 +239,7 @@ void executeRMQSuccinct(std::vector<long long>& A, size_t N, vector<vector<query
                 miss_ratio = hw_event.getCacheMissRatio();
             }
   
-            q_stats[i].addQueryResult(qry[i][j],microseconds(),miss_ratio);
+            q_stats[i].addQueryResult(qry[i][j],microseconds(),miss_ratio,hw_event.getCacheMisses(),hw_event.getCacheReferences());
         }
         q_stats[i].printQueryStats();
     }
