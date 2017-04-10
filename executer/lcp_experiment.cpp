@@ -198,8 +198,8 @@ int main(int argc, char *argv[]) {
         load_from_file(lcp, lcp_file);
     }
     
-    string algo1 = "RMQ_SUCCINCT_REC_1024";
-    string algo2 = "RMQ_SUCCINCT_REC_OLD_1024";
+    string algo1 = "RMQ_SUCCINCT_REC_OLD_1024_2";
+    string algo2 = "RMQ_SUCCINCT_REC_NEW_1024_2";
     string algo3 = "RMQ_SUCCINCT_SCT";
     string algo4 = "RMQ_FERRADA";
     string algo5 = "RMQ_SUCCINCT";
@@ -218,10 +218,10 @@ int main(int argc, char *argv[]) {
     
     
     {
-        rmq_succinct_rec_old<1024> rmq(&lcp);
+        rmq_succinct_rec_new<true,1024.128,0> rmq(&lcp);
         cout << "Start Suffix-Tree Traversion for RMQ " << algo2 << "..." << endl;
         s = time();
-        size_t num_queries = traverseSuffixTree<rmq_succinct_rec_old<1024>>(rmq,lcp);
+        size_t num_queries = traverseSuffixTree<rmq_succinct_rec_new<true,1024.128,0>>(rmq,lcp);
         e = time();
         //double percentage_avoided = (static_cast<double>(rmq.num_avoided_selects)/static_cast<double>(rmq.num_queries));
         //std::cout << rmq.num_avoided_selects << " out of " << rmq.num_queries << " queries (" << percentage_avoided << "%) avoids second select" << std::endl;

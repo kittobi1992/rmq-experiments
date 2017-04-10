@@ -81,7 +81,7 @@ query_range_time_plot <- function(d, title="", thres=4.0, aes_plot = aes(factor(
   d$Range <- as.numeric(as.character(d$Range))
   d <- subset(d,d$Time <= thres)
   d <- subset(d,d$Algo != "RMQ_SDSL_BP")
-  d <- subset(d,d$Algo != "RMQ_SDSL_BP_FAST_REC_OLD_1024")
+  #d <- subset(d,d$Algo != "RMQ_SDSL_BP_FAST_REC_OLD_1024")
   d <- subset(d,d$Algo != "RMQ_SDSL_BP_FAST_REC_1024")
   d$Algo  <- revalue(d$Algo, c("RMQ_FERRADA"="BP-Ferrada","RMQ_SDSL_SCT"="SDSL-OLD","RMQ_SUCCINCT"="SUCCINCT","RMQ_SDSL_BP_FAST_REC_1024"="SDSL-BP-REC"))
   
@@ -198,10 +198,10 @@ internal_timings_plot <- function(timings, title="") {
 
 #==========Experiment===========#
 experiment_dir="C:/Users/tobia/Documents/home/theuer/rmq-experiments/results/"
-date="2017-04-07"
-seq_type="random"
-max_length="10"
-delta="0"
+date="2017-04-10"
+seq_type="decreasing"
+max_length="9"
+delta="10000"
 tmp <- cbind(date,"rmq_experiment",seq_type,max_length,delta)
 experiment <- str_c(tmp,collapse='_');
 experiment <- paste(experiment_dir,experiment,sep="")
@@ -214,9 +214,9 @@ query$N <- as.numeric(as.character(query$N))
 min_n = log10(min(query$N))
 max_n = log10(max(query$N))
 
-for (n in  (10:10)) {
+for (n in  (9:9)) {
   query_sub <- subset(query,query$N == 10^n)
-  t <- 7.5
+  t <- 5
   query_range_time_plot(query_sub,thres=t)
 }
 
