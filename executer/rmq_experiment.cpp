@@ -38,27 +38,21 @@ struct query_stats {
     double bits_per_element;
     std::vector<query> q;
     std::vector<double> q_time;
-    std::vector<double> miss_ratio;
-    std::vector<ll> cache_miss;
-    std::vector<ll> cache_references;
     string algo;
     
     query_stats(string& algo) : algo(algo) { }
     
-    void addQueryResult(query& qu, double time, double cache_miss_ratio, ll cache_misses, ll cache_ref) {
+    void addQueryResult(query& qu, double time) {
         q.push_back(qu);
         q_time.push_back(time);
-        miss_ratio.push_back(cache_miss_ratio);
-        cache_miss.push_back(cache_misses);
-        cache_references.push_back(cache_ref);
     }
     
     
     void printQueryStats() {
         for(size_t i = 0; i < q.size(); ++i) {
             ll range = q[i].second - q[i].first + 1;
-            printf("QUERY_RESULT Algo=%s N=%zu Range=%lld Time=%f MissRatio=%f CacheMisses=%lld CacheReferences=%lld\n", 
-                    algo.c_str(), N, range, q_time[i], miss_ratio[i], cache_miss[i], cache_references[i]);
+            printf("QUERY_RESULT Algo=%s N=%zu Range=%lld Time=%f\n", 
+                    algo.c_str(), N, range, q_time[i]);
         }
     }
     
@@ -85,6 +79,32 @@ struct construction_stats {
     
 };
 
+struct cache_miss_stats {
+    size_t N;
+    string algo;
+    std::vector<size_t> R;
+    std::vector<double> miss_ratio;
+    std::vector<double> cache_miss;
+    std::vector<double> cache_references;
+    
+    cache_miss_stats(size_t N, string& algo) : N(N), algo(algo) { }
+    
+    
+    void addCacheMissResult(size_t range, double cache_miss_ratio, double cache_misses, double cache_ref) {
+        R.push_back(range);
+        miss_ratio.push_back(cache_miss_ratio);
+        cache_miss.push_back(cache_misses);
+        cache_references.push_back(cache_ref);
+    }
+    
+    void printCacheMissStats() {
+        for(size_t i = 0; i < R.size(); ++i) {
+            printf("CACHE_MISS_RESULT Algo=%s N=%zu Range=%zu MissRatio=%f CacheMisses=%f CacheReferences=%f\n", 
+                   algo.c_str(), N, R[i], miss_ratio[i], cache_miss[i], cache_references[i]);
+        }
+    }
+};
+
  
 inline HighResClockTimepoint time() {
     return std::chrono::high_resolution_clock::now();
@@ -105,7 +125,7 @@ class RMQExperiment {
     
 public:
     RMQExperiment(string& algo, int_vector<> *seq , vector<vector<query>>& qry) 
-                 : algo(algo), q_stats(qry.size(), query_stats(algo)), c_stats(algo) { 
+                 : algo(algo), q_stats(qry.size(), query_stats(algo)), c_stats(algo), cache_stats(seq->size(),algo) { 
         s = time();
         RMQ rmq(seq);
         e = time();
@@ -121,31 +141,40 @@ public:
         ofstream out("benchmark/"+algo+".txt");
         for(int i = 0; i < qry.size(); ++i) {
             q_stats[i].N = seq->size();
+            
+            if(count_cache_misses) {
+                bool success = hw_event.start(PERF_COUNT_HW_CACHE_MISSES); 
+                if(!success) {
+                    perror("perf_event_open");
+                    exit(-1);   
+                }
+            }
+            
             for(int j = 0; j < qry[i].size(); ++j) {
                 ll i1 = qry[i][j].first, i2 = qry[i][j].second;
-                
-                if(count_cache_misses) {
-                    bool success = hw_event.start(PERF_COUNT_HW_CACHE_MISSES); 
-                    if(!success) {
-                        perror("perf_event_open");
-                        exit(-1);   
-                    }
-                }
             
                 s = time();
                 auto res = rmq(i1,i2);
                 e = time();
                 
-                double miss_ratio = 0;
-                if(count_cache_misses) {
-                    hw_event.stop();
-                    miss_ratio = hw_event.getCacheMissRatio();
-                }
-                
                 out << res << "\n";
-                q_stats[i].addQueryResult(qry[i][j],microseconds(),miss_ratio,hw_event.getCacheMisses(),hw_event.getCacheReferences());
+                q_stats[i].addQueryResult(qry[i][j],microseconds());
             }
+           
+            if(count_cache_misses) {
+                hw_event.stop();
+                size_t range = qry[i][0].second - qry[i][0].first + 1;
+                double cache_miss = static_cast<double>(hw_event.getCacheMisses())/qry[i].size();
+                double cache_ref = static_cast<double>(hw_event.getCacheReferences())/qry[i].size();
+                double miss_ratio = (cache_ref == 0.0 ? 0.0 : cache_miss/cache_ref);
+                cache_stats.addCacheMissResult(range,miss_ratio,cache_miss,cache_ref);
+            }
+            
             q_stats[i].printQueryStats(); 
+        }
+        
+        if(count_cache_misses) {
+            cache_stats.printCacheMissStats();
         }
         
     }
@@ -154,6 +183,7 @@ private:
     string& algo;
     vector<query_stats> q_stats;
     construction_stats c_stats;
+    cache_miss_stats cache_stats;
 };
 
 
@@ -161,6 +191,7 @@ void executeRMQFerrada(long int *A, size_t N, vector<vector<query>>& qry) {
     string algo = "RMQ_FERRADA";
     vector<query_stats> q_stats(qry.size(),query_stats(algo));
     construction_stats c_stats(algo);
+    cache_miss_stats cache_stats(N,algo);
     
     s = time();
     RMQRMM64 rmq(A,N);
@@ -172,31 +203,40 @@ void executeRMQFerrada(long int *A, size_t N, vector<vector<query>>& qry) {
     
     for(int i = 0; i < qry.size(); ++i) {
         q_stats[i].N = N;
+        
+        if(count_cache_misses) {
+            bool success = hw_event.start(PERF_COUNT_HW_CACHE_MISSES); 
+            if(!success) {
+                perror("perf_event_open");
+                exit(-1);   
+            }
+        }
+        
         for(int j = 0; j < qry[i].size(); ++j) {
             ll i1 = qry[i][j].first, i2 = qry[i][j].second;
             if(i1 > ULONG_MAX || i2 > ULONG_MAX) continue;
-           
-            if(count_cache_misses) {
-                bool success = hw_event.start(PERF_COUNT_HW_CACHE_MISSES); 
-                if(!success) {
-                    perror("perf_event_open");
-                    exit(-1);   
-                }
-            }
             
             s = time();
             auto res = rmq.queryRMQ(i1,i2);
             e = time();
-            
-            double miss_ratio = 0;
-            if(count_cache_misses) {
-                hw_event.stop();
-                miss_ratio = hw_event.getCacheMissRatio();
-            }
-            
-	    q_stats[i].addQueryResult(qry[i][j],microseconds(),miss_ratio,hw_event.getCacheMisses(),hw_event.getCacheReferences());
+          
+	       q_stats[i].addQueryResult(qry[i][j],microseconds());
         }
+        
+        if(count_cache_misses) {
+            hw_event.stop();
+            size_t range = qry[i][0].second - qry[i][0].first + 1;
+            double cache_miss = static_cast<double>(hw_event.getCacheMisses())/qry[i].size();
+            double cache_ref = static_cast<double>(hw_event.getCacheReferences())/qry[i].size();
+            double miss_ratio = cache_miss/cache_ref;
+            cache_stats.addCacheMissResult(range,miss_ratio,cache_miss,cache_ref);
+        }
+        
         q_stats[i].printQueryStats();
+    }
+    
+    if(count_cache_misses) {
+        cache_stats.printCacheMissStats();
     }
     
 }
@@ -205,6 +245,7 @@ void executeRMQSuccinct(std::vector<long long>& A, size_t N, vector<vector<query
     string algo = "RMQ_SUCCINCT";
     vector<query_stats> q_stats(qry.size(),query_stats(algo));
     construction_stats c_stats(algo);
+    cache_miss_stats cache_stats(N,algo);
     
     s = time();
     succinct::cartesian_tree rmq(A);
@@ -217,31 +258,40 @@ void executeRMQSuccinct(std::vector<long long>& A, size_t N, vector<vector<query
      
     for(int i = 0; i < qry.size(); ++i) {
         q_stats[i].N = N;
+        
+        if(count_cache_misses) {
+            bool success = hw_event.start(PERF_COUNT_HW_CACHE_MISSES); 
+            if(!success) {
+                perror("perf_event_open");
+                exit(-1);   
+            }
+        }
+        
         for(int j = 0; j < qry[i].size(); ++j) {
             uint64_t i1 = qry[i][j].first, i2 = qry[i][j].second;
             if(i1 > ULONG_MAX || i2 > ULONG_MAX) continue;
             
-            if(count_cache_misses) {
-                bool success = hw_event.start(PERF_COUNT_HW_CACHE_MISSES); 
-                if(!success) {
-                    perror("perf_event_open");
-                    exit(-1);   
-                }
-            }
-            
             s = time();
             auto res = rmq.rmq(i1,i2);
             e = time();
-
-            double miss_ratio = 0;
-            if(count_cache_misses) {
-                hw_event.stop();
-                miss_ratio = hw_event.getCacheMissRatio();
-            }
   
-            q_stats[i].addQueryResult(qry[i][j],microseconds(),miss_ratio,hw_event.getCacheMisses(),hw_event.getCacheReferences());
+            q_stats[i].addQueryResult(qry[i][j],microseconds());
         }
+        
+        if(count_cache_misses) {
+            hw_event.stop();
+            size_t range = qry[i][0].second - qry[i][0].first + 1;
+            double cache_miss = static_cast<double>(hw_event.getCacheMisses())/qry[i].size();
+            double cache_ref = static_cast<double>(hw_event.getCacheReferences())/qry[i].size();
+            double miss_ratio = cache_miss/cache_ref;
+            cache_stats.addCacheMissResult(range,miss_ratio,cache_miss,cache_ref);
+        }
+        
         q_stats[i].printQueryStats();
+    }
+    
+    if(count_cache_misses) {
+        cache_stats.printCacheMissStats();
     }
     
 }

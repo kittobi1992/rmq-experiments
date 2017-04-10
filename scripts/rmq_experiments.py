@@ -61,7 +61,7 @@ def execute_rmq_benchmark(sequence, query):
     if(compare_sdsl): cmd += ['1']
     else: cmd += ['0']
     res = exe(cmd)
-    return [grep(res,'QUERY_RESULT').split('\n'),grep(res,'CONSTRUCTION_RESULT').split('\n')]
+    return [grep(res,'QUERY_RESULT').split('\n'),grep(res,'CONSTRUCTION_RESULT').split('\n'),grep(res,'CACHE_MISS_RESULT').split('\n')]
 
 
 def get_query_stats(out):
@@ -69,9 +69,6 @@ def get_query_stats(out):
     res += [int(out.split('N=')[1].split()[0])]
     res += [float(out.split('Range=')[1].split()[0])]
     res += [float(out.split('Time=')[1].split()[0])]
-    res += [float(out.split('MissRatio=')[1].split()[0])]
-    res += [int(out.split('CacheMisses=')[1].split()[0])]
-    res += [int(out.split('CacheReferences=')[1].split()[0])]
     return res
 
 def get_construction_stats(out):
@@ -79,6 +76,15 @@ def get_construction_stats(out):
     res += [int(out.split('N=')[1].split()[0])]
     res += [float(out.split('ConstructTime=')[1].split()[0])]
     res += [float(out.split('BitsPerElement=')[1].split()[0])]
+    return res
+
+def get_cache_miss_stats(out):
+    res = [str(out.split('Algo=')[1].split()[0])]
+    res += [int(out.split('N=')[1].split()[0])]
+    res += [int(out.split('Range=')[1].split()[0])]
+    res += [float(out.split('MissRatio=')[1].split()[0])]
+    res += [float(out.split('CacheMisses=')[1].split()[0])]
+    res += [float(out.split('CacheReferences=')[1].split()[0])]
     return res
 
 def check_results():
@@ -127,6 +133,7 @@ def experiment(dirname):
     res = []
     query_res = []
     construct_res = []
+    cache_miss_res = []
     for n in N:
         print 'Sequence length N=10^'+str(int(np.log10(n)))+' and ...'
         seq = 'benchmark/' + str(n) + '.seq'
@@ -154,6 +161,8 @@ def experiment(dirname):
             query_res.append(get_query_stats(q));
         for c in benchmark_res[1]:
             construct_res.append(get_construction_stats(c));
+        for c in benchmark_res[2]:
+            cache_miss_res.append(get_cache_miss_stats(c));
             
         #Validate Result of Benchmark
         check_results()
@@ -164,13 +173,16 @@ def experiment(dirname):
         print '\n'
 
     #Construct CSV-Table with Query and Construction results
-    cols_query = ['Algo','N','Range','Time','MissRatio','CacheMisses','CacheReferences']
+    cols_query = ['Algo','N','Range','Time']
     df_query = pd.DataFrame(query_res,columns=cols_query)
     cols_construct = ['Algo','N','ConstructTime','BPE']
     df_construct = pd.DataFrame(construct_res,columns=cols_construct)
+    cols_query = ['Algo','N','Range','MissRatio','CacheMisses','CacheReferences']
+    df_cache_miss = pd.DataFrame(cache_miss_res,columns=cols_query)
     
     df_query.to_csv(dirname + 'query_result.csv')
     df_construct.to_csv(dirname + 'construct_result.csv');
+    df_cache_miss.to_csv(dirname + 'cache_miss_result.csv');
     delete_folder_content("benchmark/")
 
 def setup_experiment_environment():
