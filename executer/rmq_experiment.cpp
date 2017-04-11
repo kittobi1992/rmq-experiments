@@ -137,6 +137,12 @@ public:
         c_stats.printConstructionStats();
         write_structure<HTML_FORMAT>(rmq, "HTML/"+algo+".html");
         
+       for(int i = 0; i < qry.size(); ++i) {
+            for(int j = 0; j < qry[i].size(); ++j) {
+                ll i1 = qry[i][j].first, i2 = qry[i][j].second;
+                volatile auto res = rmq(i1,i2);
+            }
+        }
         
         ofstream out("benchmark/"+algo+".txt");
         for(int i = 0; i < qry.size(); ++i) {
@@ -202,6 +208,13 @@ void executeRMQFerrada(long int *A, size_t N, vector<vector<query>>& qry) {
     c_stats.printConstructionStats();
     
     for(int i = 0; i < qry.size(); ++i) {
+        for(int j = 0; j < qry[i].size(); ++j) {
+            ll i1 = qry[i][j].first, i2 = qry[i][j].second;
+            volatile auto res = rmq.queryRMQ(i1,i2);
+        }
+    }
+
+    for(int i = 0; i < qry.size(); ++i) {
         q_stats[i].N = N;
         
         if(count_cache_misses) {
@@ -255,6 +268,13 @@ void executeRMQSuccinct(std::vector<long long>& A, size_t N, vector<vector<query
     
     c_stats.addConstructionResult(N,milliseconds(),size_succinct);
     c_stats.printConstructionStats();
+     
+    for(int i = 0; i < qry.size(); ++i) {
+        for(int j = 0; j < qry[i].size(); ++j) {
+            ll i1 = qry[i][j].first, i2 = qry[i][j].second;
+            volatile auto res = rmq.rmq(i1,i2);
+        }
+    }
      
     for(int i = 0; i < qry.size(); ++i) {
         q_stats[i].N = N;

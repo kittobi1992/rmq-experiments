@@ -90,9 +90,9 @@ query_range_cache_miss_ratio_plot <- function(d, title="") {
 
 
 #==========Experiment===========#
-experiment_dir="/home/theuer/Dokumente/rmq-experiments/results/"
+experiment_dir="C:\\Users\\tobia\\Documents\\home\\theuer\\rmq-experiments\\results\\"
 date="2017-04-10"
-seq_type="random"
+seq_type="decreasing"
 max_length="9"
 delta="0"
 tmp <- cbind(date,"rmq_experiment",seq_type,max_length,delta,"with_cache_misses")
