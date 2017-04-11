@@ -161,8 +161,9 @@ def experiment(dirname):
             query_res.append(get_query_stats(q));
         for c in benchmark_res[1]:
             construct_res.append(get_construction_stats(c));
-        for c in benchmark_res[2]:
-            cache_miss_res.append(get_cache_miss_stats(c));
+        if(count_cache_misses):
+            for c in benchmark_res[2]:
+                cache_miss_res.append(get_cache_miss_stats(c));
             
         #Validate Result of Benchmark
         check_results()
@@ -175,14 +176,17 @@ def experiment(dirname):
     #Construct CSV-Table with Query and Construction results
     cols_query = ['Algo','N','Range','Time']
     df_query = pd.DataFrame(query_res,columns=cols_query)
+    df_query.to_csv(dirname + 'query_result.csv')
+    
     cols_construct = ['Algo','N','ConstructTime','BPE']
     df_construct = pd.DataFrame(construct_res,columns=cols_construct)
-    cols_query = ['Algo','N','Range','MissRatio','CacheMisses','CacheReferences']
-    df_cache_miss = pd.DataFrame(cache_miss_res,columns=cols_query)
+    df_construct.to_csv(dirname + 'construct_result.csv')
     
-    df_query.to_csv(dirname + 'query_result.csv')
-    df_construct.to_csv(dirname + 'construct_result.csv');
-    df_cache_miss.to_csv(dirname + 'cache_miss_result.csv');
+    if(count_cache_misses):
+        cols_query = ['Algo','N','Range','MissRatio','CacheMisses','CacheReferences']
+        df_cache_miss = pd.DataFrame(cache_miss_res,columns=cols_query)
+        df_cache_miss.to_csv(dirname + 'cache_miss_result.csv')
+    
     delete_folder_content("benchmark/")
 
 def setup_experiment_environment():
