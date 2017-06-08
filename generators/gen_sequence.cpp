@@ -96,12 +96,13 @@ void writePseudoSortedDecreasingSequence(config& con, std::ofstream& os) {
     }
 }
 
-void writeEqualSequence(config& con, std::ofstream& os) {
-    printf("Starting generating pseudo decreasing sequence with A[i] in [%lld-i-%lld,%lld-i+%lld]\n",con.N,con.delta,con.N,con.delta);
-    std::uniform_int_distribution<ll> dis(con.a, con.b);
-    ll x = dis(gen);
-    for(ll i = 0; i < con.N; ++i) {
-        os << std::min(std::max(x,min_value),max_value) << (i+1 == con.N ? "\n" : " ");
+void writeWorstCaseSequence(config& con, std::ofstream& os) {
+    printf("Starting generating worst case sequence\n");
+    for(ll i = 0; i < con.N/2; ++i) {
+        os << (i+1) << (i+1 == con.N ? "\n" : " ");
+    }
+    for(ll i = con.N/2; i < con.N; ++i) {
+        os << (con.N - i) << (i+1 == con.N ? "\n" : " ");
     }
 }
 
@@ -126,7 +127,7 @@ int main(int argc, char* const argv[]) {
                 break;
         case 2: sequence::writePseudoSortedDecreasingSequence(con,os);
                 break;
-        case 3: sequence::writeEqualSequence(con,os);
+        case 3: sequence::writeWorstCaseSequence(con,os);
                 break;
         default: break;
     }

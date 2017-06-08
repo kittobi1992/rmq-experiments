@@ -32,7 +32,7 @@ def create_sequence(n,a,b,f):
         seq_t = 1
     if seq_type == 'decreasing':
         seq_t = 2
-    if seq_type == 'equal':
+    if seq_type == 'worst_case':
         seq_t = 3
     return exe(['./generators/gen_sequence.o',
          '-n', str(n),
