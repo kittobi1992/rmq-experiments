@@ -28,9 +28,9 @@ theme_complete_bw <- function(base_size = 12, base_family = "") {
 
     legend.background =  element_blank(),
     legend.margin =      unit(0.25, "cm"),
-    legend.key.height =  unit(1.5, "cm"),
-    legend.key.width =   unit(1.5, "cm"),
-    legend.text =        element_text(size = rel(1.25)),
+    legend.key.height =  unit(0.5, "cm"),
+    legend.key.width =   unit(0.5, "cm"),
+    legend.text =        element_text(size = rel(0.75)),
     legend.text.align =  NULL,
     legend.title =       element_blank(),
     legend.title.align = NULL,
@@ -79,7 +79,6 @@ query_range_time_plot_for_sdsl_implementation <- function(d, title="", thres=4.0
 query_range_time_plot <- function(d, title="", thres=4.0, aes_plot = aes(factor(Range),Time)) {
   d$Time <- as.numeric(as.character(d$Time))
   d$Range <- as.numeric(as.character(d$Range))
-  d <- subset(d,d$Time <= thres)
   d <- subset(d,d$Algo != "RMQ_SDSL_BP")
   #d <- subset(d,d$Algo != "RMQ_SDSL_BP_FAST_REC_OLD_1024")
   d <- subset(d,d$Algo != "RMQ_SDSL_BP_FAST_REC_1024")
@@ -90,6 +89,7 @@ query_range_time_plot <- function(d, title="", thres=4.0, aes_plot = aes(factor(
   plot <- plot + geom_boxplot(aes(fill = factor(Algo)), outlier.size = 1)
   plot <- plot + ylab("Time [µs]")
   plot <- plot + xlab("N")
+  plot <- plot + ylim(0,thres)
   plot <- plot + theme_complete_bw()
   print(plot)
 }
@@ -198,8 +198,8 @@ internal_timings_plot <- function(timings, title="") {
 
 #==========Experiment===========#
 experiment_dir="/home/theuer/Dokumente/rmq-experiments/results/"
-date="2017-06-08"
-seq_type="worst_case"
+date="2017-12-06"
+seq_type="increasing"
 max_length="8"
 delta="0"
 tmp <- cbind(date,"rmq_experiment",seq_type,max_length,delta)

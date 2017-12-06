@@ -90,10 +90,11 @@ query_range_cache_miss_ratio_plot <- function(d, title="") {
 
 
 #==========Experiment===========#
-experiment_dir="C:\\Users\\tobia\\Documents\\home\\theuer\\rmq-experiments\\results\\"
-date="2017-04-10"
-seq_type="decreasing"
-max_length="9"
+#experiment_dir="C:\\Users\\tobia\\Documents\\home\\theuer\\rmq-experiments\\results\\"
+experiment_dir="/home/theuer/Dokumente/rmq-experiments/results/"
+date="2017-12-06"
+seq_type="random"
+max_length="8"
 delta="0"
 tmp <- cbind(date,"rmq_experiment",seq_type,max_length,delta,"with_cache_misses")
 experiment <- str_c(tmp,collapse='_');
@@ -112,7 +113,7 @@ cache_miss$Algo  <- revalue(cache_miss$Algo, c("RMQ_FERRADA"="Ferrada","RMQ_SDSL
 min_n = log10(min(cache_miss$N))
 max_n = log10(max(cache_miss$N))
 
-for (n in  (9:9)) {
+for (n in  (8:8)) {
   cache_miss_sub <- subset(cache_miss,cache_miss$N == 10^n)
   query_range_cache_misses_plot(cache_miss_sub, paste("Cache Misses for N=10^",n," (",seq_type," input)",sep=""))
   query_range_cache_references_plot(cache_miss_sub, paste("Cache References for N=10^",n," (",seq_type," input)",sep=""))
@@ -121,7 +122,7 @@ for (n in  (9:9)) {
 
 cache_miss <- subset(cache_miss, cache_miss$Algo != "SDSL-SCT")
 cache_miss <- subset(cache_miss, cache_miss$Algo != "SUCCINCT")
-for (n in  (9:9)) {
+for (n in  (8:8)) {
   cache_miss_sub <- subset(cache_miss,cache_miss$N == 10^n)
   query_range_cache_misses_plot(cache_miss_sub, paste("Navarro&Ferrada vs. Gog&Heuer - Cache Misses for N=10^",n," (",seq_type," input)",sep=""))
   query_range_cache_references_plot(cache_miss_sub, paste("Navarro&Ferrada vs. Gog&Heuer - Cache References for N=10^",n," (",seq_type," input)",sep=""))
